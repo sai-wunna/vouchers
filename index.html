@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="author" content="sai wunna" />
+    <meta name="description" content="Voucher App" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>VC</title>
+  </head>
+  <body>
+    <div id="app">
+      <nav class="nav-wrapper">
+        <div class="nav-box">
+          <div class="nav-locker"></div>
+          <h1 id="toHome" class="active-nav">Home</h1>
+          <div class="nav-btn-box">
+            <button
+              type="button"
+              class="nav-btn"
+              title="customers"
+              id="toCustomers">
+              Customers
+            </button>
+            <button type="button" class="nav-btn" title="chart" id="toAnalyze">
+              Analyze
+            </button>
+          </div>
+        </div>
+      </nav>
+      <main id="page_wrapper"></main>
+    </div>
+    <script
+      defer
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer type="module" src="./modules/main.js"></script>
+  </body>
+</html>
