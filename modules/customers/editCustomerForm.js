@@ -1,10 +1,11 @@
 'use strict'
 
-import { updateCustomer } from '../state.js'
+import { deleteCustomer, updateCustomer } from '../state.js'
 import _ from '../dom/index.js'
 import { createModal } from '../general/createModal.js'
 import notifier from '../notify.js'
 import { createCustomerRow } from './createCustomerRow.js'
+import { lockNav } from '../general/navLocker.js'
 
 function createEditCustomerInfoForm() {
   let customerInfo = null,
@@ -13,8 +14,19 @@ function createEditCustomerInfoForm() {
     $prevPhone = null
 
   const $deleteBtn = _.createButton('Delete', ['btn-corner-left', 'btn-red'])
-  function handleDelete(e) {
-    console.log(customerInfo)
+  async function handleDelete(e) {
+    try {
+      const isProcessCompleted = await deleteCustomer(customerInfo.id)
+      if (!isProcessCompleted) {
+        notifier.on('sww', 'error')
+        return
+      }
+      _.getNodeById(`cusId-${customerInfo.id}`)?.remove()
+      notifier.on('deleteComplete', 'success')
+      lockNav('Deleted Customer !!!')
+    } catch (error) {
+      console.log(error)
+    }
   }
   const $updateBtn = _.createButton('Update', [
     'btn',
@@ -25,6 +37,12 @@ function createEditCustomerInfoForm() {
   const $nameIp = _.createInput('', ['form-control'], 'edit_cus_name')
   const $addressIp = _.createInput('', ['form-control'], 'edit_cus_address')
   const $phoneIp = _.createInput('', ['form-control'], 'edit_cus_phone')
+  const $favoriteIp = _.createInput(
+    'checkbox',
+    ['form-check'],
+    'edit_cus_favorite'
+  )
+
   const $form = _.createElement(
     '',
     '',
@@ -38,6 +56,17 @@ function createEditCustomerInfoForm() {
       $addressIp,
       _.createLabel('Phone', 'edit_cus_phone', ['form-label']),
       $phoneIp,
+      _.createElement(
+        '',
+        '',
+        ['check-box-group'],
+        [
+          $favoriteIp,
+          _.createLabel('Add To Favorites', 'edit_cus_favorite', [
+            'form-check-label',
+          ]),
+        ]
+      ),
       $updateBtn,
     ]
   )
@@ -50,9 +79,10 @@ function createEditCustomerInfoForm() {
       const address = $addressIp.value
       const phone = $phoneIp.value.split(',')
       customerInfo.name = name
-      $prevName.textContent = `${name} (⭐${customerInfo.stars})`
+      $prevName.textContent = name
       customerInfo.address = $prevAddress.textContent = address
       customerInfo.phone = $prevPhone.textContent = phone
+      customerInfo.favorite = $favoriteIp.checked
       await updateCustomer(customerInfo)
 
       // if customer info in list , then update dom
@@ -68,7 +98,7 @@ function createEditCustomerInfoForm() {
           })
         )
       }
-
+      lockNav(`${customerInfo.favorite ? '⭐' : ''}${customerInfo.name}`)
       notifier.__end('Successfully Updated', 'success')
     } catch (error) {
       notifier.__end('Something went wrong', 'error')
@@ -98,6 +128,7 @@ function createEditCustomerInfoForm() {
     $nameIp.value = customerInfo.name
     $addressIp.value = $prevAddressNode.textContent
     $phoneIp.value = $prevPhoneNode.textContent
+    $favoriteIp.checked = customerInfo.favorite
   }
 
   function __cleanUpFunc() {

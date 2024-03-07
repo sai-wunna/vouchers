@@ -1,10 +1,10 @@
 'use strict'
 
+import _ from './dom/index.js'
 import { createCustomerRows } from './customers/createCustomerRow.js'
 import searchCustomerForm from './customers/searchCustomerForm.js'
 import createCustomerDetail from './customers/customerDetail.js'
 import { sortCustomersBy } from './state.js'
-import _ from './dom/index.js'
 import createAddCustomerForm from './customers/addCustomerForm.js'
 import { openModal } from './general/createModal.js'
 
@@ -19,6 +19,7 @@ function createCustomersPage() {
       return
     // if not LI return, else open customer detail
     const id = e.target.id || e.target.parentElement.id
+
     await __setUpCustomerDetail(parseInt(id.split('-')[1]))
     // here go to customer detail ( toggle components )
     $allCustomersBox.classList.add('d-none')

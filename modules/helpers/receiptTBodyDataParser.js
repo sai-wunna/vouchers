@@ -1,8 +1,8 @@
 const tHeader = {
   headers: [
     { text: 'Type' },
-    { text: 'Amount' },
     { text: 'Rate' },
+    { text: 'Amount' },
     { text: 'Charge' },
   ],
 }
@@ -16,7 +16,7 @@ function convertToTBDataNTotalAmount(data = []) {
       if (k === 'charge') {
         totalCharge += parseInt(v)
       }
-      rowData.push({ text: v })
+      rowData.push({ text: isNaN(v) ? v : v.toLocaleString() })
     }
     tBodyRows.push({ data: rowData })
   })

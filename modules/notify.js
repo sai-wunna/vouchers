@@ -1,7 +1,7 @@
 'use strict'
 
 import _ from './dom/index.js'
-// reset messages by testing with database ( to set common errors )
+
 class Notify {
   #alertMessages = {
     invalid: 'Invalid Action',
@@ -17,6 +17,10 @@ class Notify {
     voucherUpdateErr: 'Something went wrong',
     noPageData: 'No Data to Show',
     sww: 'Something Went Wrong',
+    jsonFileOnly: 'Please Select Valid .json File',
+    deleteComplete: 'Successfully Deleted',
+    deletedCustomer: 'This Customer has been removed',
+    maintenance: 'Under Construction',
   }
   #countLimit
   #currentCount = 0
@@ -38,12 +42,12 @@ class Notify {
     ])
     _.appendChild($alertBox)
     let dropTimer = setTimeout(() => {
-      $alertBox.style.transform = `translate(-50%, ${
+      $alertBox.style.transform = `translateY( ${
         (this.#currentCount - 1) * 110 + 20
       }%)`
     }, 10)
     let hideTimer = setTimeout(() => {
-      $alertBox.style.transform = 'translate(-50%, -100%)'
+      $alertBox.style.transform = 'translateY( -100%)'
     }, period)
 
     let removeTimer = setTimeout(() => {

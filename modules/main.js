@@ -8,44 +8,60 @@ import $loadingPage from './general/loadingPage.js'
   const $navigateToCustomers = _.getNodeById('toCustomers')
   const $navigateToAnalyze = _.getNodeById('toAnalyze')
   const $navigateToHome = _.getNodeById('toHome')
+  const $navigateToFileManager = _.getNodeById('toFileManager')
   const $pageWrapper = _.getNodeById('page_wrapper')
 
   let currentRoute = 'home'
   let cleanUpFunc = () => {}
-  let spamBlocker = true
+  let navSpamBlocker = true
 
   _.on('click', $navigateToHome, async (e) => {
-    if (spamBlocker) return
-
+    if (navSpamBlocker) return
     if (currentRoute === 'home') return
 
     currentRoute = 'home'
+    $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
+
     setActiveNav(e.target)
     switchPage((await import('./home.js')).default)
     updateTitle('Home')
   })
 
   _.on('click', $navigateToCustomers, async (e) => {
-    if (spamBlocker) return
-
+    if (navSpamBlocker) return
     if (currentRoute === 'customers') return
 
     currentRoute = 'customers'
+    $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
+
     setActiveNav(e.target)
     switchPage((await import('./customers.js')).default)
     updateTitle('Customers')
   })
 
   _.on('click', $navigateToAnalyze, async (e) => {
-    if (spamBlocker) return
+    notifier.on('maintenance', 'warning')
+    // if (navSpamBlocker) return
+    // if (currentRoute === 'analyze') return
 
-    if (currentRoute === 'analyze') return
+    // currentRoute = 'analyze'
+    // $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
-    currentRoute = 'analyze'
+    // setActiveNav(e.target)
+    // switchPage((await import('./analyze.js')).default)
+    // updateTitle('Analyze')
+  })
+
+  _.on('click', $navigateToFileManager, async (e) => {
+    if (navSpamBlocker) return
+    if (currentRoute === 'file') return
+
+    currentRoute = 'file'
+    $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
     setActiveNav(e.target)
-    switchPage((await import('./analyze.js')).default)
-    updateTitle('Analyze')
+    switchPage((await import('./fileManager.js')).default)
+    updateTitle('File Manager')
   })
 
   function setActiveNav($node) {
@@ -56,17 +72,17 @@ import $loadingPage from './general/loadingPage.js'
   async function switchPage(createPage) {
     try {
       await cleanUpFunc()
-      spamBlocker = true
+      navSpamBlocker = true
+
       const [$page, __setUpPage, __cleanUpPage] = await createPage()
       await __setUpPage()
+      cleanUpFunc = __cleanUpPage
 
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
-      cleanUpFunc = __cleanUpPage
       const timerId = setTimeout(async () => {
         $loadingPage.replaceWith($page)
-        spamBlocker = false
+        navSpamBlocker = false
         clearTimeout(timerId)
       }, 500)
     } catch (error) {
@@ -76,10 +92,17 @@ import $loadingPage from './general/loadingPage.js'
   }
 
   function updateTitle(page) {
-    document.title = 'VC ' + page
+    document.title = page
   }
+
+  window.addEventListener('beforeunload', function (e) {
+    e.preventDefault()
+    e.returnValue = ''
+    return ''
+  })
   ;(async () => {
     $pageWrapper.appendChild(_.createElement('br'))
+    $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
     switchPage((await import('./home.js')).default)
   })()
 })()

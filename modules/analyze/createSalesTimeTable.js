@@ -14,8 +14,8 @@ function createSalesTimeTable(handleClick) {
     $toChartBtn.dataset.period = period
 
     const classList = ['sale-time-period']
-    if (period === 'yearly') {
-      classList.push('yearly-sale')
+    if (period === 'thisYear') {
+      classList.push('this-year-sale')
     }
 
     const $percentageFragment = _.createFragment()

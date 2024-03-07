@@ -7,8 +7,8 @@ function openModal($modal) {
   $modal.classList.add('open-modal-wrapper')
   const $box = $modal.firstChild.lastChild // real content data box
   $box.classList.add('modal-open-intro')
-  const timer = setTimeout(() => {
-    clearTimeout(timer)
+  const timerId = setTimeout(() => {
+    clearTimeout(timerId)
     $box.classList.remove('modal-open-intro')
   })
 }
@@ -18,10 +18,10 @@ function createModal($box, evtCleaner = false) {
     'x',
     ['close-modal-btn'],
     '',
-    (e) => {
+    async (e) => {
       e.preventDefault()
       if (evtCleaner) {
-        evtCleaner()
+        await evtCleaner()
       }
       document.body.removeAttribute('class')
       $modal.classList.remove('open-modal-wrapper')

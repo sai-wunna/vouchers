@@ -1,3 +1,4 @@
+const dayNames = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat']
 const monthNames = [
   'Jan',
   'Feb',
@@ -18,11 +19,6 @@ function getMonthName(dateStr) {
   return monthNames[idx]
 }
 
-// function getMonthByName(dateStr) {
-//   const [year, monthIndex] = dateStr.split('-')
-//   return `${monthNames[monthIndex - 1]} ${year}`
-// }
-
 function calculatePageDate(firstDate, lastDate) {
   const [y1, m1] = firstDate.split('-')
   const [y2, m2] = lastDate.split('-')
@@ -40,11 +36,16 @@ function calculatePageDate(firstDate, lastDate) {
 function getFormatDate() {
   const currentDate = new Date()
 
-  const year = currentDate.getFullYear().toString().slice(-2) // Extract the last two digits of the year
+  const year = currentDate.getFullYear().toString()
   const month = (currentDate.getMonth() + 1).toString().padStart(2, '0') // Get month and pad with leading zero if necessary
   const day = currentDate.getDate().toString().padStart(2, '0') // Get day and pad with leading zero if necessary
 
   return year + '-' + month + '-' + day
 }
 
-export { getMonthName, calculatePageDate, getFormatDate }
+function getDayName() {
+  const currentDayIdx = new Date().getDay()
+  return dayNames[currentDayIdx]
+}
+
+export { getMonthName, calculatePageDate, getFormatDate, getDayName }

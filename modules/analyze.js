@@ -3,7 +3,7 @@
 import createAnalyzeChart from './analyze/chart.js'
 import createSalesTimeTable from './analyze/createSalesTimeTable.js'
 import _ from './dom/index.js'
-import { enterSubPage } from './general/subPageInOut.js'
+import { lockNav } from './general/navLocker.js'
 import { customers, tableData, vouchers } from './state.js'
 
 function createAnalyzePage() {
@@ -30,9 +30,9 @@ function createAnalyzePage() {
     const period = e.target.dataset.period
     const percentage = tableData[period].percentage
     await __setUpChart(period) // must provide key or data
-    enterSubPage(
+    lockNav(
       `In ${period} ${percentage} ${
-        period === 'yearly' ? '' : 'of total Sales'
+        period === 'thisYear' ? '' : 'of total Sales'
       }`
     )
     $salesTable.classList.add('d-none')

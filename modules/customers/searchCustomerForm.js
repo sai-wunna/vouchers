@@ -14,8 +14,8 @@ function createSearchBox($customerList) {
     if (!e.target.value) return
     spamBlocker = setTimeout(async () => {
       const customers = await searchCustomer(
-        e.target.value.toLowerCase(),
-        $searchTypeSelect.value.toLowerCase()
+        e.target.value,
+        $searchTypeSelect.value
       )
       const $customers = await createCustomerRows(customers)
       $customerList.appendChild($customers)

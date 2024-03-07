@@ -3,7 +3,7 @@
 import _ from '../dom/index.js'
 import createConfigChartBox from './configChart.js'
 import { chartConfig, getChartDataByPeriod } from '../state.js'
-import { existSubPage } from '../general/subPageInOut.js'
+import { unlockNav } from '../general/navLocker.js'
 
 function createAnalyzeChart($salesTable) {
   let cleanMemoTimer = null
@@ -50,7 +50,7 @@ function createAnalyzeChart($salesTable) {
     cleanMemoTimer = setTimeout(() => {
       __sleepFunc()
     }, 10000)
-    existSubPage()
+    unlockNav()
   }
 
   const $controllers = _.createElement(

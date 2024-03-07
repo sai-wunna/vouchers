@@ -240,15 +240,16 @@ function createVoucherForm() {
         _.getAllNodes('.good-charge-ip')
       )
       // store to db
-      const vcId = await saveNewVoucher(
-        customerInfo.id,
-        customerInfo.name,
+      const data = {
+        customerId: customerInfo.id,
+        name: customerInfo.name,
         goodInfo,
         paid,
-        date,
+        createdOn: date,
         note,
-        paymentMethod
-      )
+        paymentMethod,
+      }
+      const vcId = await saveNewVoucher(data, totalCharge)
       if (vouchers.currentPage === 0) {
         const $tBody = _.getNode('.data-info-box')
         $tBody.insertBefore(
@@ -259,8 +260,7 @@ function createVoucherForm() {
             date.split('-')[2],
             totalCharge,
             paid,
-            paymentMethod,
-            $tBody.childElementCount + 1
+            paymentMethod
           ),
           $tBody.firstChild
         )
@@ -304,6 +304,7 @@ function createVoucherForm() {
     $addressIp.value = ''
     $phoneIp.value = ''
     $paidIp.value = ''
+    $noteTArea.value = ''
     $methodSelect[0].selected = true
     _.emptyChild($goodInfoBoxWrapper)
     _.emptyChild($nameList)

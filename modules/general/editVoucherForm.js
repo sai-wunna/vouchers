@@ -7,6 +7,7 @@ import { createModal } from './createModal.js'
 import notifier from '../notify.js'
 import { createVoucherRow } from '../home/createVoucherRow.js'
 import { deleteVoucher, updateVoucher } from '../state.js'
+import { getFormatDate } from '../helpers/getDate.js'
 
 function createEditVoucherForm() {
   let $prevVoucher = null
@@ -175,7 +176,7 @@ function createEditVoucherForm() {
       const { id, createdOn } = voucherInfo
       const paymentMethod = $methodSelect.value
       const note = $noteTArea.value
-      const updatedOn = new Date().toLocaleDateString()
+      const updatedOn = getFormatDate()
       const paid = parseInt($paidIp.value)
       const cancelled = $cancelCheckBox.checked
       const [totalAmount, totalCharge, goodInfo] = await convertToGoodInfoData(
@@ -194,7 +195,7 @@ function createEditVoucherForm() {
         paymentMethod,
         cancelled,
       }
-      const updatedData = await updateVoucher(data)
+      const updatedData = await updateVoucher(data, totalCharge)
       if (!updatedData) {
         notifier.__end('Something went wrong', 'error')
         return
@@ -202,6 +203,7 @@ function createEditVoucherForm() {
       replaceUpdatedNode(updatedData)
       notifier.__end('Updated Successfully', 'success')
     } catch (error) {
+      console.log(error)
       notifier.__end('Something went wrong', 'error')
     }
   }

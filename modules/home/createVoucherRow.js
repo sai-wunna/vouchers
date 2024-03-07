@@ -26,8 +26,8 @@ function createVoucherRow(
   const $tr = _.createElement('tr', '', classList, [
     $date,
     _.createElement('td', name.slice(0, 20)),
-    _.createElement('td', `${totalAmount}vis`, ['cell-md-show']),
-    _.createElement('td', totalCharge.toLocaleString()),
+    _.createElement('td', `${totalAmount}`),
+    _.createElement('td', totalCharge.toLocaleString(), ['cell-md-show']),
     _.createElement('td', paid.toLocaleString()),
     _.createElement('td', paymentMethod, ['cell-md-show']),
   ])

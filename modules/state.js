@@ -1,12 +1,4 @@
-import {
-  customers,
-  vouchers,
-  chartConfig,
-  tableData,
-  chartBaseSetUp,
-  chartData,
-} from './data.js' // temporary
-import { getMonthName } from './helpers/getDate.js'
+import { tableData, chartBaseSetUp, chartData } from './data.js' // temporary
 
 //--------rules
 // -- all data must be unshift to arr, to make newer first
@@ -14,73 +6,36 @@ import { getMonthName } from './helpers/getDate.js'
 // data.json : { customers : [], vouchers : [], chartConfig : {}  : chartBaseSetUp : {} }
 // then calculate and store to state
 
-// const customers = []
-// const vouchers = {data : [],currentPage : 1, pages : []}
-// const chartConfig = {}
+const customers = []
+const vouchers = {
+  currentPage: 0,
+  data: [],
+}
+const chartConfig = {
+  chartType: 'line',
+  datasetsConf: {
+    borderWidth: 1,
+    tension: 0.5,
+    pointRadius: 3,
+    fill: 'origin',
+  },
+}
 // const tableData = {}
 // const chartBaseSetUp = {}
 // const chartData = {}
 
+const importedFileData = {}
+
 // ------- handle vouchers start -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
 
-// function setVoucherPages() {
-//   const pages = []
-//   let page = []
-//   const endPoint = vouchers.data.length - 1
-
-//   for (let i = 0; i < endPoint + 1; i++) {
-//     page.push(vouchers.data[i])
-
-//     if (page.length === 30 || i === endPoint) {
-//       pages.push(page)
-//       page = []
-//     }
-//   }
-//   return pages
-// }
-function setVoucherPages() {
-  const pages = []
-  let page = []
-  const endPoint = vouchers.data.length - 1
-
-  for (let i = 0; i < endPoint + 1; i++) {
-    page.push(vouchers.data[i])
-
-    if (page.length === 30 || i === endPoint) {
-      // Clone the page array before pushing it into pages
-      pages.push([...page])
-      page = []
-    }
-  }
-  return pages
-}
-
-function saveNewVoucher(
-  customerId,
-  name,
-  goodInfo,
-  paid,
-  createdOn,
-  note,
-  paymentMethod
-) {
+function saveNewVoucher(data, totalCharge) {
   const id = vouchers.data.length + 1
-  const newVoucher = {
-    id,
-    name,
-    customerId,
-    goodInfo,
-    paid,
-    createdOn,
-    note,
-    paymentMethod,
-  }
+  const newVoucher = { id, ...data }
   vouchers.data.unshift(newVoucher)
-  if (vouchers.pages[0]) {
-    vouchers.pages[0].unshift(newVoucher)
-  } else {
-    vouchers.pages.push([newVoucher])
-  }
+  // give customer stars by money spent
+  const stars = Math.round(totalCharge / 10000)
+  const customerIdx = customers.findIndex((cus) => cus.id === data.customerId)
+  customers[customerIdx].stars += stars
   return id
 }
 
@@ -90,65 +45,79 @@ function getAVoucher(receiptId) {
   return { receipt: { ...receipt }, customer: { ...customer } }
 }
 
-function updateVoucher(data) {
+async function updateVoucher(data, totalCharge) {
   const id = parseInt(data.id)
   const idx = vouchers.data.findIndex((voucher) => voucher.id === id)
   if (idx === -1) {
     return false
   }
-
-  for (const [k, v] of Object.entries(data)) {
-    vouchers.data[idx][k] = v
-  }
-
   const oldData = { ...vouchers.data[idx] }
   const newData = {
     ...data,
     customerId: oldData.customerId,
     name: oldData.name,
   }
-  // watch whether data in pages updated or not ( cancelled or not )
-  // update chart and table data too!!! compare to decrease or increase amount
+
+  for (const [k, v] of Object.entries(data)) {
+    vouchers.data[idx][k] = v
+  }
+  // update stars of customer
+  await updateStarsOfCustomerOnUpdateVoucher(oldData, newData, totalCharge)
   return newData
 }
+// | helper of upper one |
+function updateStarsOfCustomerOnUpdateVoucher(oldData, newData, totalCharge) {
+  const customerIdx = customers.findIndex(
+    (cus) => cus.id === oldData.customerId
+  )
 
-function deleteVoucher(vid) {
+  if (newData.cancelled !== oldData.cancelled) {
+    const stars = Math.round(totalCharge / 10000)
+    if (newData.cancelled) {
+      customers[customerIdx].stars -= stars
+    } else {
+      customers[customerIdx].stars += stars
+    }
+  }
+  const oldTotalCharge = oldData.goodInfo.reduce(
+    (total, info) => total + info.charge,
+    0
+  )
+
+  if (
+    !newData.cancelled &&
+    !oldData.cancelled &&
+    oldTotalCharge !== totalCharge
+  ) {
+    const stars = Math.round((totalCharge - oldTotalCharge) / 10000)
+    customers[customerIdx].stars += stars
+  }
+}
+
+async function deleteVoucher(vid) {
   const id = parseInt(vid)
   const idx = vouchers.data.findIndex((voucher) => voucher.id === id)
   if (idx === -1) {
     return false
   }
-
-  // Find the page index and the index within the page
-  let pageIndex = -1
-  let idxInPage = -1
-
-  // Binary search for the page containing the voucher
-  let left = 0
-  let right = vouchers.pages.length - 1
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2)
-    const firstIdInPage = vouchers.pages[mid][0].id
-    const lastIdInPage = vouchers.pages[mid][vouchers.pages[mid].length - 1].id
-    if (id < firstIdInPage) {
-      right = mid - 1
-    } else if (id > lastIdInPage) {
-      left = mid + 1
-    } else {
-      pageIndex = mid
-      idxInPage = vouchers.pages[mid].findIndex((voucher) => voucher.id === id)
-      break
-    }
-  }
-
-  if (pageIndex === -1 || idxInPage === -1) {
-    return false
-  }
-
+  const voucher = { ...vouchers.data[idx] }
   vouchers.data.splice(idx, 1)
-  vouchers.pages[pageIndex].splice(idxInPage, 1)
-
+  if (!voucher.cancelled) {
+    await updateStarsOfCustomerOnDeleteVoucher(voucher)
+  }
   return true
+}
+
+function updateStarsOfCustomerOnDeleteVoucher(voucher) {
+  const customerIdx = customers.findIndex(
+    (cus) => cus.id === voucher.customerId
+  )
+  const totalCharge = voucher.goodInfo.reduce(
+    (total, info) => total + info.charge,
+    0
+  )
+  const stars = Math.round(totalCharge / 10000)
+  customers[customerIdx].stars -= stars
 }
 
 // ------- handle vouchers end -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
@@ -171,9 +140,9 @@ function getACustomerInfo(id) {
 }
 
 function getCustomerAndHisVouchersById(id) {
-  const customersData = customers.find((cus) => cus.id === id)
+  const customerData = customers.find((cus) => cus.id === id)
   const vouchersData = vouchers.data.filter((vc) => vc.customerId === id)
-  return { customer: customersData, vouchers: vouchersData }
+  return { customerData, vouchersData }
 }
 
 function saveNewCustomer(
@@ -200,7 +169,18 @@ function updateCustomer(updatedData) {
   try {
     const id = updatedData.id
     const idx = customers.findIndex((cus) => cus.id === id)
-    customers[idx] = updatedData
+
+    if (customers[idx].name !== updatedData.name) {
+      vouchers.data.map((voucher) => {
+        if (voucher.customerId === id) {
+          voucher.name = updatedData.name
+        }
+      })
+    }
+
+    for (const [k, v] of Object.entries(updatedData)) {
+      customers[idx][k] = v
+    }
     return true
   } catch (error) {
     console.log(error)
@@ -225,8 +205,13 @@ function searchCustomer(query, type, limit = 10) {
 function deleteCustomer(cusId) {
   try {
     const id = parseInt(cusId)
-    const vouchersCount = vouchers.data.findIndex()
+    const vouchersCount = vouchers.data.findIndex(
+      (voucher) => voucher.customerId === id
+    )
     const idx = customers.findIndex((cus) => cus.id === id)
+    if (vouchersCount !== -1 || idx === -1) {
+      return false
+    }
     customers.splice(idx, 1)
     return true
   } catch (error) {
@@ -234,30 +219,30 @@ function deleteCustomer(cusId) {
     return false
   }
 }
-// when update ( add amount ) or add voucher
-function giveStarsToCustomer(cusId, stars) {
-  try {
-    const id = parseInt(cusId)
-    const idx = customers.findIndex((cus) => cus.id === id)
-    customers[idx].stars = customers[idx].stars + parseInt(stars)
-    return true
-  } catch (error) {
-    console.log(error)
-    return false
-  }
-}
-// when update ( cancel or reduce amount ) or delete
-function removeStarsFromCustomer(cusId, stars) {
-  try {
-    const id = parseInt(cusId)
-    const idx = customers.findIndex((cus) => cus.id === id)
-    customers[idx].stars = customers[idx].stars - parseInt(stars)
-    return true
-  } catch (error) {
-    console.log(error)
-    return false
-  }
-}
+// // when update ( add amount ) or add voucher
+// function giveStarsToCustomer(cusId, stars) {
+//   try {
+//     const id = parseInt(cusId)
+//     const idx = customers.findIndex((cus) => cus.id === id)
+//     customers[idx].stars = customers[idx].stars + parseInt(stars)
+//     return true
+//   } catch (error) {
+//     console.log(error)
+//     return false
+//   }
+// }
+// // when update ( cancel or reduce amount ) or delete
+// function removeStarsFromCustomer(cusId, stars) {
+//   try {
+//     const id = parseInt(cusId)
+//     const idx = customers.findIndex((cus) => cus.id === id)
+//     customers[idx].stars = customers[idx].stars - parseInt(stars)
+//     return true
+//   } catch (error) {
+//     console.log(error)
+//     return false
+//   }
+// }
 
 // ------- handle customers end -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
 
@@ -347,7 +332,6 @@ async function initiateState({
 }) {
   try {
     vouchers.data.push(...vouchers)
-    vouchers.pages = await [...setVoucherPages()]
 
     customers.push(...customerData)
 
@@ -365,10 +349,9 @@ async function initiateState({
   }
 }
 
-// test ------------ need to remove
-vouchers.pages = [...setVoucherPages()]
-
 export {
+  importedFileData,
+  // ---------
   customers,
   vouchers,
   chartConfig,

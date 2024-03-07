@@ -2,8 +2,7 @@ import _ from '../dom/index.js'
 
 const $navLocker = _.getNode('.nav-locker')
 
-// use when sub page is opened
-function enterSubPage(pageName) {
+function lockNav(pageName) {
   $navLocker.classList.add('activate-nav-locker')
   $navLocker.textContent = pageName.slice(0, 30)
   const timer = setTimeout(() => {
@@ -13,7 +12,7 @@ function enterSubPage(pageName) {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-function existSubPage() {
+function unlockNav() {
   $navLocker.style.color = 'transparent'
   const timer = setTimeout(() => {
     $navLocker.classList.remove('activate-nav-locker')
@@ -21,4 +20,4 @@ function existSubPage() {
   }, 300)
 }
 
-export { enterSubPage, existSubPage }
+export { lockNav, unlockNav }
