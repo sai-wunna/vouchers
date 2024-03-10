@@ -46,9 +46,9 @@ function createVoucherCard(data) {
     _.createElement(
       '',
       '',
-      ['receipt-secret'],
+      ['receipt-secret', 'hide-content-by-x-axis'],
       [
-        _.createElement('', note),
+        _.createElement('', note || 'No Note !!!'),
         _.createElement(
           'i',
           updatedOn ? `This data was updated on ${updatedOn}` : ''

@@ -8,4 +8,4 @@ function lockBtn(btn, delay = 500) {
   }, delay)
 }
 
-export { lockBtn }
+export default lockBtn

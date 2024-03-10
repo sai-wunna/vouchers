@@ -52,18 +52,14 @@ function createReceipt() {
   const $secretBox = _.createElement(
     '',
     '',
-    ['receipt-secret'],
+    ['receipt-secret', 'hide-content-by-x-axis'],
     [$note, _.createElement('br'), $updatedDate]
   )
   // listener
   let show = true
   function toggleSecretBox(e) {
     e.preventDefault()
-    if (show) {
-      $secretBox.style.display = 'none'
-    } else {
-      $secretBox.style.display = 'block'
-    }
+    $secretBox.classList.toggle('hide-content-by-x-axis')
     show = !show
   }
   // footer data
@@ -120,7 +116,7 @@ function createReceipt() {
     // set footer
     $totalChargeHeader.textContent = `Total ${totalCharge.toLocaleString()}ks`
     $totalPaidHeader.textContent = `Paid ${paid.toLocaleString()}ks`
-    $note.textContent = `${note ? `Note - ${note}` : ''}`
+    $note.textContent = `${note ? `Note - ${note}` : 'No Notes !!!'}`
     $updatedDate.textContent = `${
       updatedOn ? `This Voucher was updated on ${updatedOn}` : ''
     }`

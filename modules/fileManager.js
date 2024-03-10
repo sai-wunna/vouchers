@@ -4,11 +4,13 @@ import _ from './dom/index.js'
 import { customers, importedFileData, vouchers } from './state.js'
 import notifier from './notify.js'
 import downloadBox from './fileManager/download.js'
+import lockBtn from './helpers/lockBtn.js'
 
 function fileManager() {
   const expectedFileVersion = document.cookie
     .split('; ')
     .find((row) => row.startsWith('expectedFileVersion='))
+    ?.split('=')[1]
 
   const $exceptedFileVersion = _.createHeading('h2', '------')
 
@@ -73,6 +75,9 @@ function fileManager() {
         $ifTotalCustomers.textContent = `Total Customers Recorded : ${data.customers.length}`
         $ifTimePeriod.textContent = data.timePeriod
         $ifVersion.textContent = `Version : ${data.version}`
+        if (expectedFileVersion && data.version !== expectedFileVersion) {
+          notifier.on('versionConflict', 'warning', 5000)
+        }
       } catch (error) {
         notifier.on('jsonFileOnly', 'warning')
         fileData = null
@@ -82,17 +87,23 @@ function fileManager() {
     reader.readAsText(file)
   }
 
-  const $startBtn = _.createButton('Confirm', ['btn', 'btn-blue', 'float-end'])
-  function handleConfirm() {
+  const $confirmBtn = _.createButton('Confirm', [
+    'btn',
+    'btn-blue',
+    'float-end',
+  ])
+  function handleConfirm(e) {
     if (!fileData) return
+    lockBtn(e.target, 5000)
     notifier.__start('Building Data', 'info')
     importedFileData.totalVouchers = fileData.vouchers.length
     importedFileData.totalCustomers = fileData.customers.length
     importedFileData.timePeriod = fileData.timePeriod
     importedFileData.version = fileData.version
 
-    vouchers.data = [...fileData.vouchers]
+    vouchers.data.splice(0, vouchers.data.length, ...fileData.vouchers)
     customers.splice(0, customers.length, ...fileData.customers)
+    vouchers.currentPage = 0
     notifier.__end('Ready', 'info')
   }
 
@@ -104,7 +115,7 @@ function fileManager() {
       $importFileHeader,
       $importedFileInfoBox,
       _.createElement('', '', ['file-input-group'], [$fileIpLabel, $fileInput]),
-      $startBtn,
+      $confirmBtn,
     ]
   )
 
@@ -127,15 +138,15 @@ function fileManager() {
       expectedFileVersion !== undefined &&
       expectedFileVersion !== importedFileData.version
     ) {
-      $exceptedFileVersion.textContent = `Excepted File Version :${expectedFileVersion}`
+      $exceptedFileVersion.textContent = `Excepted Version : ${expectedFileVersion}`
     }
     _.on('change', $fileInput, handleFileChange)
-    _.on('click', $startBtn, handleConfirm)
+    _.on('click', $confirmBtn, handleConfirm)
   }
 
   async function __cleanUpFunc() {
     _.on('change', $fileInput, handleFileChange)
-    _.on('click', $startBtn, handleConfirm)
+    _.on('click', $confirmBtn, handleConfirm)
     if (downloadBoxAppended) {
       await __cleanUpDownloadBox()
     }

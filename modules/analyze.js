@@ -3,7 +3,7 @@
 import createAnalyzeChart from './analyze/chart.js'
 import createSalesTimeTable from './analyze/createSalesTimeTable.js'
 import _ from './dom/index.js'
-import { lockNav } from './general/navLocker.js'
+import lockNav from './general/navLocker.js'
 import { customers, tableData, vouchers } from './state.js'
 
 function createAnalyzePage() {

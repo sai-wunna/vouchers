@@ -39,8 +39,8 @@ function saveNewVoucher(data, totalCharge) {
   return id
 }
 
-function getAVoucher(receiptId) {
-  const receipt = vouchers.data.find((vc) => vc.id === receiptId)
+function getAVoucher(vid) {
+  const receipt = vouchers.data.find((vc) => vc.id === vid)
   const customer = customers.find((cus) => cus.id === receipt.customerId)
   return { receipt: { ...receipt }, customer: { ...customer } }
 }
@@ -127,7 +127,15 @@ function updateStarsOfCustomerOnDeleteVoucher(voucher) {
 async function sortCustomersBy(type) {
   const sortingFunctions = {
     stars: (a, b) => b.stars - a.stars,
-    favorite: (a, b) => b.favorite - a.favorite,
+    favorite: (a, b) => {
+      if (a.favorite && !b.favorite) {
+        return -1 // `a` is favorite and `b` is not, so `a` comes first
+      } else if (!a.favorite && b.favorite) {
+        return 1 // `b` is favorite and `a` is not, so `b` comes first
+      } else {
+        return 0 // Both have the same favorite status, no change in order
+      }
+    },
     newerFirst: (a, b) => new Date(a.createdOn) - new Date(b.createdOn),
     olderFirst: (a, b) => new Date(b.createdOn) - new Date(a.createdOn),
   }
@@ -219,30 +227,6 @@ function deleteCustomer(cusId) {
     return false
   }
 }
-// // when update ( add amount ) or add voucher
-// function giveStarsToCustomer(cusId, stars) {
-//   try {
-//     const id = parseInt(cusId)
-//     const idx = customers.findIndex((cus) => cus.id === id)
-//     customers[idx].stars = customers[idx].stars + parseInt(stars)
-//     return true
-//   } catch (error) {
-//     console.log(error)
-//     return false
-//   }
-// }
-// // when update ( cancel or reduce amount ) or delete
-// function removeStarsFromCustomer(cusId, stars) {
-//   try {
-//     const id = parseInt(cusId)
-//     const idx = customers.findIndex((cus) => cus.id === id)
-//     customers[idx].stars = customers[idx].stars - parseInt(stars)
-//     return true
-//   } catch (error) {
-//     console.log(error)
-//     return false
-//   }
-// }
 
 // ------- handle customers end -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
 
@@ -331,9 +315,9 @@ async function initiateState({
   chartConfig: chartConfigData,
 }) {
   try {
-    vouchers.data.push(...vouchers)
+    vouchers.data.splice(0, vouchers.data.length, ...vouchers)
 
-    customers.push(...customerData)
+    customers.splice(0, customers.length, ...customerData)
 
     for (const [k, v] of Object.entries(chartBaseSetUpData)) {
       chartBaseSetUp[k] = v

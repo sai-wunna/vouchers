@@ -13,7 +13,7 @@ function createCustomerRow(data) {
     [
       _.createHeading('h6', `${name.slice(0, 20)}`, classList),
       _.createHeading('h6', address.slice(0, 20), ['d-md-show']),
-      _.createElement('i', `${stars}⭐`),
+      _.createElement('i', `${stars.toLocaleString()}s`),
     ],
     `cusId-${id}`
   )

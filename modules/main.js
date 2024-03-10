@@ -95,11 +95,11 @@ import $loadingPage from './general/loadingPage.js'
     document.title = page
   }
 
-  window.addEventListener('beforeunload', function (e) {
-    e.preventDefault()
-    e.returnValue = ''
-    return ''
-  })
+  // window.addEventListener('beforeunload', function (e) {
+  //   e.preventDefault()
+  //   e.returnValue = ''
+  //   return ''
+  // })
   ;(async () => {
     $pageWrapper.appendChild(_.createElement('br'))
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)

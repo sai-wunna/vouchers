@@ -1,6 +1,6 @@
 'use strict'
 
-import { createVoucherRow } from './createVoucherRow.js'
+import { createVoucherRow, createVoucherRows } from './createVoucherRow.js'
 import {
   saveNewCustomer,
   saveNewVoucher,
@@ -12,12 +12,12 @@ import _ from '../dom/index.js'
 import notifier from '../notify.js'
 import { createModal } from '../general/createModal.js'
 import convertToGoodInfoData from '../helpers/convertToGoodInfoData.js'
+import lockBtn from '../helpers/lockBtn.js'
+import { calculatePageDate } from '../helpers/getDate.js'
 
 function createVoucherForm() {
-  // date
-  const formattedDate = new Date().toISOString().substr(0, 10)
   const $dateIp = _.createInput('date', ['date-input'], '', {
-    value: formattedDate,
+    value: new Date().toISOString().substr(0, 10),
   })
 
   // name
@@ -51,9 +51,17 @@ function createVoucherForm() {
   function createExistedCusName(users) {
     const fragment = _.createFragment()
     for (const user of users) {
-      const nameInfo = _.createElement('', `✓ ${user.name}`, [
-        'existed-cus-name',
-      ])
+      const nameInfo = _.createElement(
+        '',
+        `${user.name} ${
+          user.address
+            ? `( ${user.address} )`
+            : user.company
+            ? `( ${user.company} )`
+            : ''
+        }`,
+        ['existed-cus-name']
+      )
       nameInfo.dataset.cusId = user.id
       fragment.appendChild(nameInfo)
     }
@@ -211,10 +219,13 @@ function createVoucherForm() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!$nameIp.value) {
+    lockBtn(e.target, 3000)
+
+    if (!$nameIp.value || !$paidIp.value || !boxNumber) {
       notifier.on('invalidVoucherInfo', 'warning')
       return
     }
+
     try {
       notifier.__start('Creating Voucher')
       // if not old user, create user info
@@ -239,7 +250,7 @@ function createVoucherForm() {
         _.getAllNodes('.good-rate-ip'),
         _.getAllNodes('.good-charge-ip')
       )
-      // store to db
+      // update state
       const data = {
         customerId: customerInfo.id,
         name: customerInfo.name,
@@ -249,28 +260,67 @@ function createVoucherForm() {
         note,
         paymentMethod,
       }
+
       const vcId = await saveNewVoucher(data, totalCharge)
-      if (vouchers.currentPage === 0) {
-        const $tBody = _.getNode('.data-info-box')
-        $tBody.insertBefore(
-          createVoucherRow(
-            vcId,
-            $nameIp.value,
-            totalAmount,
-            date.split('-')[2],
-            totalCharge,
-            paid,
-            paymentMethod
-          ),
-          $tBody.firstChild
-        )
-      }
+
+      await updatePageData(
+        vcId,
+        totalAmount,
+        date,
+        totalCharge,
+        paid,
+        paymentMethod
+      )
 
       notifier.__end('Successfully Created', 'success')
     } catch (error) {
       console.log(error)
       notifier.__end('Something went wrong', 'error')
     }
+  }
+
+  function updatePageData(
+    vcId,
+    totalAmount,
+    date,
+    totalCharge,
+    paid,
+    paymentMethod
+  ) {
+    const $tBody = _.getNode('.data-info-box')
+
+    if ($tBody.childElementCount === 20) {
+      $tBody.lastChild.remove()
+    }
+
+    if (vouchers.currentPage === 0) {
+      $tBody.insertBefore(
+        createVoucherRow(
+          vcId,
+          customerInfo.name,
+          totalAmount,
+          date,
+          totalCharge,
+          paid,
+          paymentMethod
+        ),
+        $tBody.firstChild
+      )
+    } else {
+      const vcData = vouchers.data[vouchers.currentPage * 20]
+      $tBody.insertBefore(createVoucherRows([vcData]), $tBody.firstChild)
+    }
+
+    _.getNode('.controllers').firstChild.textContent = `Page - ${
+      vouchers.currentPage + 1
+    } / ${Math.ceil(vouchers.data.length / 20) || 1} ( ${
+      $tBody.childElementCount
+    } 📄 )`
+
+    _.getNode('.time-period-header').textContent = calculatePageDate(
+      $tBody.firstChild.dataset.createdOn,
+      $tBody.lastChild.dataset.createdOn
+    )
   }
 
   const $form = _.createForm(
@@ -298,8 +348,9 @@ function createVoucherForm() {
   const [$main, __cleanUpModal] = createModal($form, __sleepFunc)
 
   function __sleepFunc() {
+    newUser = true
+    customerInfo = null
     boxNumber = 0
-    $dateIp.value = ''
     $nameIp.value = ''
     $addressIp.value = ''
     $phoneIp.value = ''

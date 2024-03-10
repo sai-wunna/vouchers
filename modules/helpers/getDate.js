@@ -18,18 +18,19 @@ function getMonthName(dateStr) {
   const idx = parseInt(dateStr.split('-')[1])
   return monthNames[idx]
 }
-
+// return newer date first
 function calculatePageDate(firstDate, lastDate) {
-  const [y1, m1] = firstDate.split('-')
-  const [y2, m2] = lastDate.split('-')
+  const [y1, m1] = firstDate.split('-').map((item) => Number(item))
+  const [y2, m2] = lastDate.split('-').map((item) => Number(item))
+
   if (y1 === y2 && m1 === m2) {
     return 'Sales Of This Month'
   } else if (y1 === y2) {
-    return `From ${monthNames[m2 - 1]} to ${monthNames[m1 - 1]}`
+    return `${monthNames[m1 - 1]} - ${monthNames[m2 - 1]}`
   } else if (m1 === m2) {
     return 'Sales Of This Month'
   } else {
-    return `From ${y2 + '-' + m2} to ${y1 + '-' + m1}`
+    return `${y1 + '/' + m1} - ${y2 + '/' + m2}`
   }
 }
 

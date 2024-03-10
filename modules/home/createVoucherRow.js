@@ -21,8 +21,11 @@ function createVoucherRow(
     classList.push('cancelled-voucher-info')
   }
 
-  const $date = _.createElement('td', createdOn, ['vc-created-date'])
+  const $date = _.createElement('td', createdOn.split('-')[2], [
+    'vc-created-date',
+  ])
   $date.dataset.edit = true
+
   const $tr = _.createElement('tr', '', classList, [
     $date,
     _.createElement('td', name.slice(0, 20)),
@@ -33,6 +36,7 @@ function createVoucherRow(
   ])
 
   $tr.dataset.vid = id
+  $tr.dataset.createdOn = createdOn
 
   return $tr
 }
@@ -55,7 +59,7 @@ function createVoucherRows(data) {
       id,
       name,
       totalAmount,
-      createdOn.split('-')[2],
+      createdOn,
       totalCharge,
       paid,
       paymentMethod,

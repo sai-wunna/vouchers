@@ -8,6 +8,7 @@ import createEditCustomerForm from './editCustomerForm.js'
 import { openModal } from '../general/createModal.js'
 import createEditVoucherForm from '../general/editVoucherForm.js'
 import { lockNav, unlockNav } from '../general/navLocker.js'
+import countStarsAnimate from '../general/starCounter.js'
 
 function createCustomerDetail($allCustomersBox) {
   let customerInfo = null
@@ -65,16 +66,23 @@ function createCustomerDetail($allCustomersBox) {
     unlockNav()
   }
 
-  async function handleEditVoucherClick(e) {
-    if (e.target.tagName !== 'BUTTON') return
-    const id = parseInt(e.target.dataset.vid)
-    const voucher = customerVouchers.find((vc) => vc.id === id)
-    await __setUpEditVoucherForm(
-      voucher,
-      e.target.parentElement,
-      customerInfo.name
-    )
-    openModal($editVoucherForm)
+  async function handleClickOnVoucher(e) {
+    if (e.target.tagName === 'BUTTON') {
+      const id = parseInt(e.target.dataset.vid)
+      const voucher = customerVouchers.find((vc) => vc.id === id)
+      await __setUpEditVoucherForm(
+        voucher,
+        e.target.parentElement,
+        customerInfo.name
+      )
+      openModal($editVoucherForm)
+      // edit btn evt handler
+    } else if (e.target.tagName === 'SPAN') {
+      e.target.parentElement.childNodes[6].classList.toggle(
+        'hide-content-by-x-axis'
+      )
+      // toggle note
+    }
   }
 
   async function handleEditCustomerClick() {
@@ -82,42 +90,56 @@ function createCustomerDetail($allCustomersBox) {
     openModal($editCustomerForm)
   }
 
-  function countStarsAnimate(stars) {
-    let counter = 0
-    $starCounter.classList.add('star-counting')
-    const intervalId = setInterval(() => {
-      if (counter > stars) {
-        clearInterval(intervalId)
-        $starCounter.textContent = `${stars.toLocaleString()} stars`
-        $starCounter.classList.remove('star-counting')
+  function appendVoucherCards(data = customerVouchers.slice(0, 10)) {
+    const $fragment = _.createFragment()
+    data.forEach(async (voucher) => {
+      $customerVouchers.appendChild(await createVoucherCard(voucher))
+    })
+    $customerVouchers.appendChild($fragment)
+  }
+
+  // auto loader ---------------------------------- start
+  let ioLoadedCount = 10 // stop when sortedCustomersData.length
+  let ioScrollBack = false // this is weird, but works ( instead of entry.target.isIntercepting)
+  const $intersectionObserver = _.createElement('', '', [
+    'cus-vouchers-intersection-observer',
+    'text-center',
+  ])
+
+  const intersectionObserver = new IntersectionObserver(
+    (entries) => {
+      ioScrollBack = !ioScrollBack
+      if (ioScrollBack) {
         return
       }
-      $starCounter.textContent = calValue(counter)
-    })
-    function calValue(num) {
-      if (num > 9999) {
-        counter += 1000
-        return `${num.toLocaleString()} stars`
-      } else if (num > 999) {
-        counter += 100
-        return `${num.toLocaleString()} stars`
-      } else {
-        counter += 10
-        return `${num.toLocaleString()} stars`
+      if (ioLoadedCount > customerVouchers.length) {
+        return
       }
-    }
-  }
+      entries.forEach((entry) => {
+        $intersectionObserver.textContent = 'Loading . . .'
+        // loaded += 10
+        const timer = setTimeout(async () => {
+          appendVoucherCards(
+            customerVouchers.slice(ioLoadedCount, (ioLoadedCount += 10))
+          )
+          $intersectionObserver.textContent = ''
+          clearTimeout(timer)
+        }, 500)
+      })
+    },
+    { threshold: 1 }
+  )
 
   async function __sleepFunc() {
     customerInfo = null
-    customerVouchers = null // clear voucher arr
-    _.emptyChild($customerVouchers) // remove voucher nodes
-
+    customerVouchers = null
+    _.emptyChild($customerVouchers)
+    intersectionObserver.unobserve($intersectionObserver)
     // under construction
     // await __cleanUpChart()
 
     _.removeOn('click', $backToCustomersBtn, handleBackToAllCustomersPage)
-    _.removeOn('click', $customerVouchers, handleEditVoucherClick)
+    _.removeOn('click', $customerVouchers, handleClickOnVoucher)
     _.removeOn('click', $editCustomerBtn, handleEditCustomerClick)
   }
 
@@ -145,23 +167,21 @@ function createCustomerDetail($allCustomersBox) {
       phone.length > 0 ? `Phone : ${phone.join(',')}` : 'Phone : No Contact'
     $createdOn.textContent = `Account was created on ${createdOn}`
     $company.textContent = `Company : ${company || 'Not Know'}`
-    await countStarsAnimate(stars)
+    await countStarsAnimate($starCounter, stars)
 
     // setUpChart
     // await __setUpChart(customerInfo)
 
-    // clear old vouchers
     _.emptyChild($customerVouchers)
-    // show customer detail
-    lockNav(`${favorite ? '⭐' : ''}${name}`)
+    appendVoucherCards()
+    ioLoadedCount = 10
+    intersectionObserver.observe($intersectionObserver)
 
-    customerVouchers.forEach(async (voucher) => {
-      $customerVouchers.appendChild(await createVoucherCard(voucher))
-    })
+    lockNav(`${favorite ? '⭐' : ''}${name}`)
 
     _.on('click', $editCustomerBtn, handleEditCustomerClick)
     _.on('click', $backToCustomersBtn, handleBackToAllCustomersPage)
-    _.on('click', $customerVouchers, handleEditVoucherClick)
+    _.on('click', $customerVouchers, handleClickOnVoucher)
   }
 
   function __cleanUpFunc() {
@@ -183,6 +203,7 @@ function createCustomerDetail($allCustomersBox) {
       $customerInfo,
       // $chart,
       $customerVouchers,
+      $intersectionObserver,
       $editCustomerForm,
       $editVoucherForm,
     ]

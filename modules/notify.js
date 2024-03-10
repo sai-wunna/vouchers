@@ -21,11 +21,13 @@ class Notify {
     deleteComplete: 'Successfully Deleted',
     deletedCustomer: 'This Customer has been removed',
     maintenance: 'Under Construction',
+    versionConflict: 'File version are not same !!!',
   }
   #countLimit
   #currentCount = 0
   #$progressLoader
   #progressTimer = null
+  #progressAlertType = null
 
   constructor(doc, countLimit = 3) {
     this._ = doc
@@ -63,18 +65,39 @@ class Notify {
 
   __start(msg = 'Loading', type = 'info') {
     clearTimeout(this.#progressTimer)
-    this.#$progressLoader.classList.add(`alert-${type}`)
+
+    if (this.#progressAlertType) {
+      this.#$progressLoader.classList.remove(this.#progressAlertType)
+    }
+
+    this.#$progressLoader.classList.add(
+      (this.#progressAlertType = `alert-${type}`)
+    )
+
     this.#$progressLoader.textContent = msg
     _.appendChild(this.#$progressLoader)
   }
 
   __processing(msg = 'Almost ready', type = 'info') {
-    this.#$progressLoader.classList.add(`alert-${type}`)
+    if (this.#progressAlertType) {
+      this.#$progressLoader.classList.remove(this.#progressAlertType)
+    }
+
+    this.#$progressLoader.classList.add(
+      (this.#progressAlertType = `alert-${type}`)
+    )
     this.#$progressLoader.textContent = msg
   }
 
   __end(msg = 'Ready', type = 'success') {
-    this.#$progressLoader.classList.add(`alert-${type}`)
+    if (this.#progressAlertType) {
+      this.#$progressLoader.classList.remove(this.#progressAlertType)
+    }
+
+    this.#$progressLoader.classList.add(
+      (this.#progressAlertType = `alert-${type}`)
+    )
+
     this.#$progressLoader.textContent = msg
     this.#progressTimer = setTimeout(() => {
       this.#$progressLoader.remove()

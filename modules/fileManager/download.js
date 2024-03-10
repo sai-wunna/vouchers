@@ -1,8 +1,10 @@
 'use strict'
 
 import _ from '../dom/index.js'
+import notifier from '../notify.js'
 import { vouchers, customers } from '../state.js'
 import { getDayName, getFormatDate } from '../helpers/getDate.js'
+import lockBtn from '../helpers/lockBtn.js'
 
 function downloadBox() {
   const $currentDataHeading = _.createHeading('h3', 'Current Data')
@@ -19,7 +21,10 @@ function downloadBox() {
     'p',
     `Version : ${getFormatDate()
       .split('-')
-      .join('')}-${getDayName()}-${new Date().getTime()}`
+      .join('')}-${getDayName()}-${new Date()
+      .getTime()
+      .toString()
+      .slice(0, 5)}********`
   )
   const $downloadBtn = _.createButton('Download', [
     'btn',
@@ -28,6 +33,7 @@ function downloadBox() {
   ])
 
   function handleDownload(e) {
+    lockBtn(e.target, 5000)
     try {
       notifier.__start('Building Data', 'info')
       const data = {
@@ -52,6 +58,9 @@ function downloadBox() {
       downloadLink.click()
 
       _.removeChild(downloadLink)
+
+      document.cookie = `expectedFileVersion=${data.version}`
+
       notifier.__end('Download In Process', 'success')
       URL.revokeObjectURL(url)
     } catch (error) {

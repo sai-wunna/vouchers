@@ -79,6 +79,10 @@
   display: none !important;
 }
 
+.hide-content-by-x-axis {
+  transform: scaleX(0) !important;
+}
+
 .d-md-show {
   display: block;
 }
@@ -277,6 +281,7 @@
   font-size: 1.1rem;
   background-color: transparent;
   box-shadow: none;
+  border: 1px solid transparent;
 }
 
 .btn-corner-left,
@@ -342,6 +347,14 @@
 .btn-corner-left:active,
 .btn-corner-right:active {
   transform: scale(0.9);
+}
+
+.btn-ghost:hover {
+  border: 1px solid;
+}
+
+button:disabled {
+  opacity: 0.5;
 }
 
 .text-red {
@@ -499,7 +512,7 @@ h1 {
   cursor: pointer;
   transition: all 0.3s ease-in-out;
   margin: 0.1rem;
-  border-left: 4px solid;
+  border-left: 2px solid black;
   padding: 5px;
   opacity: 1;
 }
@@ -525,27 +538,40 @@ h1 {
 /* data-info page styling --------------------------------- start */
 
 .time-period-header {
-  text-align: center;
   margin: 0.5rem;
   color: #1c6327;
-  font-size: 1.1rem;
+  font-size: 1.5rem;
 }
 
 .voucher-table-container {
   min-height: 60vh;
+  margin: 1rem 0;
 }
 
 .voucher-table {
   width: 100%;
   border-collapse: collapse;
+  box-shadow: 0 2px 5px 2px rgba(0, 0, 0, 0.358);
+  text-align: center;
+}
+
+.voucher-table th {
+  background-color: white;
+  padding: 20px 10px;
+}
+
+.created-date-th {
+  background-color: rgb(67, 67, 67) !important;
+  max-width: 50px;
+  color: white;
 }
 
 .vc-created-date {
   font-style: italic;
   text-align: center;
   color: white;
-  font-weight: bold;
-  background-color: rgb(94, 91, 124) !important;
+  background-color: rgb(67, 67, 67) !important;
+  border-right: 5px solid rgb(100, 186, 100) !important;
 }
 
 .data-info-box tr {
@@ -554,19 +580,7 @@ h1 {
 }
 
 .data-info-box tr:hover {
-  opacity: 0.8;
-}
-
-.voucher-table th {
-  background-color: rgb(110, 108, 137);
-  padding: 20px 10px;
-  color: white;
-  text-align: center;
-}
-
-.created-date-th {
-  max-width: 50px;
-  background-color: rgb(74, 72, 113) !important;
+  opacity: 0.7;
 }
 
 .voucher-table td {
@@ -574,17 +588,16 @@ h1 {
   padding: 16px 4px;
 }
 
-.voucher-table tr {
-  background-color: #d4ffd1;
+.voucher-table tr:nth-child(odd) {
+  background-color: #e5e5e5;
 }
 
-.ongoing-voucher-info td {
-  background-color: #ffffc7;
+.ongoing-voucher-info > .vc-created-date {
+  border-right: 5px solid orange !important;
 }
 
-.cancelled-voucher-info td {
-  background-color: #fad6d6;
-  text-decoration: line-through;
+.cancelled-voucher-info > .vc-created-date {
+  border-right: 5px solid red !important;
 }
 
 .voucher-info-btn {
@@ -618,20 +631,17 @@ h1 {
 }
 
 .existed-customer-list {
-  position: relative;
   width: 100%;
   z-index: 1001;
 }
 
 .existed-cus-name {
   cursor: pointer;
-  background-color: rgb(102, 99, 122);
+  background-color: rgb(83, 83, 83);
   margin: 5px;
   border-radius: 5px;
-  padding: 5px;
+  padding: 10px;
   transition: transform 0.3s ease-in-out;
-  border: 3px solid transparent;
-  border-left: 5px solid rgb(75, 75, 127);
   color: white;
 }
 
@@ -729,6 +739,7 @@ h1 {
 }
 
 .receipt-footer {
+  position: relative;
   padding: 10px;
   background-color: white;
   margin: 1rem auto 0;
@@ -746,11 +757,17 @@ h1 {
 }
 
 .receipt-secret {
+  position: absolute;
+  width: 100%;
+  top: 30%;
+  left: 0%;
+  background-color: rgb(245, 245, 245);
   display: block;
-  padding: 0.1rem;
-  box-shadow: inset 0 1px 2px 1px rgba(0, 0, 0, 0.479);
+  padding: 0.2rem;
+  box-shadow: 0 1px 2px 1px rgba(255, 7, 7, 0.479);
   border-radius: 5px;
-  margin: 0.5rem;
+  margin: 0.5rem 0;
+  transition: transform 0.3s ease-in-out;
   text-align: center;
 }
 
@@ -792,25 +809,27 @@ h1 {
   color: rgb(151, 129, 0);
 }
 
-.customers-interception-observer {
+.customers-intersection-observer,
+.cus-vouchers-intersection-observer {
   padding: 50px;
 }
 
 /* customer detail modal styling */
 
 .star-counter {
-  color: rgb(252, 252, 252);
+  color: rgb(109, 73, 73);
   padding: 10px 20px;
   min-width: 150px;
   text-align: center;
   font-weight: bold;
   border-radius: 5px;
-  background: linear-gradient(135deg, #88b900, #418c37, #c4bf61);
+  background: linear-gradient(135deg, #d1ff53, #7fff6e, #fff990);
   transition: transform 0.5s ease-in-out;
+  border: 2px solid rgb(46, 162, 0);
 }
 
 .star-counting {
-  transform: scale(0.9);
+  transform: scale(0.8);
 }
 
 .customer-info {
@@ -834,11 +853,12 @@ h1 {
   align-items: baseline;
   flex-wrap: wrap;
   gap: 2%;
+  margin: 1rem 0;
 }
 
 .customer-voucher {
   width: 49%;
-  box-shadow: 0 2px 10px 2px rgba(0, 0, 0, 0.286);
+  box-shadow: 0 2px 5px 2px rgba(0, 0, 0, 0.286);
   border-radius: 8px;
   padding: 10px 5px;
   margin: 0.4rem 0;
@@ -847,9 +867,9 @@ h1 {
 }
 
 .customer-voucher > span {
-  border-radius: 5px;
+  border-radius: 6px;
   padding: 2px 5px;
-  transition: padding 0.3s ease-in-out;
+  cursor: pointer;
 }
 
 .customer-voucher > span {
@@ -865,10 +885,6 @@ h1 {
 .cancelled-voucher > span {
   background-color: rgb(255, 175, 175);
   border: 2px solid rgb(193, 104, 104);
-}
-
-.customer-voucher > span:hover {
-  padding: 2px 10px;
 }
 
 .create-customer-form,
@@ -1055,6 +1071,9 @@ h1 {
   .file-page {
     margin: 0.2rem 0;
     padding: 0.2rem;
+  }
+  .time-period-header {
+    font-size: 1.2rem;
   }
   .data-info-wrapper {
     padding: 0.2rem;

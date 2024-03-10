@@ -5,9 +5,18 @@ import _ from '../dom/index.js'
 import convertToGoodInfoData from '../helpers/convertToGoodInfoData.js'
 import { createModal } from './createModal.js'
 import notifier from '../notify.js'
-import { createVoucherRow } from '../home/createVoucherRow.js'
-import { deleteVoucher, updateVoucher } from '../state.js'
-import { getFormatDate } from '../helpers/getDate.js'
+import {
+  createVoucherRow,
+  createVoucherRows,
+} from '../home/createVoucherRow.js'
+import {
+  deleteVoucher,
+  getACustomerInfo,
+  updateVoucher,
+  vouchers,
+} from '../state.js'
+import { calculatePageDate, getFormatDate } from '../helpers/getDate.js'
+import lockBtn from '../helpers/lockBtn.js'
 
 function createEditVoucherForm() {
   let $prevVoucher = null
@@ -16,14 +25,39 @@ function createEditVoucherForm() {
   // here need to setup
   const $deleteBtn = _.createButton('Delete', ['btn-corner-left', 'btn-red'])
   async function handleDelete(e) {
+    lockBtn(e.target, 3000)
     notifier.__start('Deleting . . . ')
-    $prevVoucher.remove()
+
     const processCompleted = await deleteVoucher(voucherInfo.id)
-    if (processCompleted) {
-      notifier.__end('Successfully Deleted', 'success')
+
+    if (!processCompleted) {
+      notifier.__end('No Data Found', 'error')
       return
     }
-    notifier.__end('No Data Found', 'error')
+    $prevVoucher.remove()
+
+    if ($prevVoucher.tagName === 'TR') {
+      const $tBody = _.getNode('.data-info-box')
+
+      const vcData = vouchers.data[(vouchers.currentPage + 1) * 20 - 1]
+
+      if (vcData) {
+        $tBody.appendChild(createVoucherRows([vcData]))
+      }
+
+      _.getNode('.controllers').firstChild.textContent = `Page - ${
+        vouchers.currentPage + 1
+      } / ${Math.ceil(vouchers.data.length / 20) || 1} ( ${
+        $tBody.childElementCount
+      } 📄 )`
+
+      _.getNode('.time-period-header').textContent = calculatePageDate(
+        $tBody.firstChild.dataset.createdOn,
+        $tBody.lastChild.dataset.createdOn
+      )
+    }
+
+    notifier.__end('Successfully Deleted', 'success')
   }
 
   const $voucherId = _.createHeading('h6')
@@ -170,7 +204,8 @@ function createEditVoucherForm() {
   const $noteTArea = _.createTextArea(['form-control'], '', 'edit_vc_note')
 
   const $updateBtn = _.createButton('Update', ['btn', 'btn-blue'])
-  async function handleUpdate() {
+  async function handleUpdate(e) {
+    lockBtn(e.target)
     try {
       notifier.__start('updatingVoucher', 'info')
       const { id, createdOn } = voucherInfo
@@ -201,11 +236,23 @@ function createEditVoucherForm() {
         return
       }
       replaceUpdatedNode(updatedData)
+      updateCustomerStars(await getACustomerInfo(updatedData.customerId))
       notifier.__end('Updated Successfully', 'success')
     } catch (error) {
       console.log(error)
       notifier.__end('Something went wrong', 'error')
     }
+  }
+
+  function updateCustomerStars(customer) {
+    const $starCounter = _.getNode('.star-counter')
+    if (!$starCounter) return
+
+    $starCounter.textContent = `${customer.stars} stars`
+
+    _.getNodeById(
+      `cusId-${customer.id}`
+    ).lastChild.textContent = `${customer.stars}s`
   }
 
   async function replaceUpdatedNode(data) {

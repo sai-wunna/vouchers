@@ -11,18 +11,14 @@ import createEditVoucherForm from './general/editVoucherForm.js'
 import notifier from './notify.js'
 
 function createHomePage() {
-  const memoizedPageNodes = {}
-
-  function cleanFarMemoizedPageNodes(pageNo, nextPage = true) {
-    const totalPageCount = Math.floor(vouchers.data.length / 20)
-    const memoizedPageCount = Object.keys(memoizedPageNodes).length
-    if (totalPageCount < 6 && memoizedPageCount < 6) {
-      return
-    }
-    const pageToDelete = nextPage ? pageNo - 5 : pageNo + 5
-    if (memoizedPageNodes.hasOwnProperty(pageToDelete)) {
-      delete memoizedPageNodes[pageToDelete]
-    }
+  const $openFormModalBtn = _.createButton('+ Add', [
+    'btn',
+    'btn-blue',
+    'float-end',
+  ])
+  async function handleAddFormModal() {
+    await __setUpAddVoucherForm()
+    openModal($addVoucherForm)
   }
 
   const $timePeriodHeader = _.createHeading('h2', 'December', [
@@ -32,18 +28,14 @@ function createHomePage() {
   const $prevBtn = _.createButton('←', ['btn', 'btn-ghost', 'm-1'])
   async function handlePageChangePrev(e) {
     notifier.__start('Loading . . .')
-    if (memoizedPageNodes.hasOwnProperty(vouchers.currentPage - 1)) {
-      cleanFarMemoizedPageNodes(vouchers.currentPage - 1, false)
-      handlePageChangeWithMemo((vouchers.currentPage -= 1))
-      $nextBtn.disabled = false
-      return
-    }
     const data = vouchers.data.slice(
       (vouchers.currentPage - 1) * 20,
       vouchers.currentPage * 20
     )
     if (data.length > 0) {
-      handlePageChange(data, (vouchers.currentPage -= 1))
+      handlePageChange(data)
+
+      vouchers.currentPage -= 1
       $nextBtn.disabled = false
     } else {
       e.target.disabled = true
@@ -54,18 +46,14 @@ function createHomePage() {
   const $nextBtn = _.createButton('→', ['btn', 'btn-ghost', 'm-1'])
   async function handlePageChangeNext(e) {
     notifier.__start('Loading . . .')
-    if (memoizedPageNodes.hasOwnProperty(vouchers.currentPage + 1)) {
-      cleanFarMemoizedPageNodes(vouchers.currentPage + 1, true)
-      handlePageChangeWithMemo((vouchers.currentPage += 1))
-      $prevBtn.disabled = false
-      return
-    }
     const data = vouchers.data.slice(
       (vouchers.currentPage + 1) * 20,
       (vouchers.currentPage + 2) * 20
     )
     if (data.length > 0) {
-      handlePageChange(data, (vouchers.currentPage += 1))
+      handlePageChange(data, true)
+
+      vouchers.currentPage += 1
       $prevBtn.disabled = false
     } else {
       e.target.disabled = true
@@ -73,42 +61,35 @@ function createHomePage() {
     }
   }
 
-  function handlePageChangeWithMemo(pageNo) {
-    const { $pageNode, title } = memoizedPageNodes[pageNo]
-    appendVoucherPage(title, $pageNode.cloneNode(true))
-  }
-
-  async function handlePageChange(data = [], pageNo) {
+  async function handlePageChange(data = []) {
     const formatDate = getFormatDate()
     const title = calculatePageDate(
       data[0]?.createdOn || formatDate,
       data[data.length - 1]?.createdOn || formatDate
     )
     const $pageNode = await createVoucherRows(data)
-    memoizedPageNodes[pageNo] = { title, $pageNode: $pageNode.cloneNode(true) }
-
-    appendVoucherPage(title, $pageNode)
+    await appendVoucherPage(title, $pageNode)
   }
 
   function appendVoucherPage(title, $pageNode) {
     _.emptyChild($voucherInfoTableBody)
-    $timePeriodHeader.textContent = title
     $voucherInfoTableBody.appendChild($pageNode)
+    // set titles
+    $timePeriodHeader.textContent = title
+    $currentPageInfo.textContent = `Page - ${vouchers.currentPage + 1} / ${
+      Math.ceil(vouchers.data.length / 20) || 1
+    } ( ${$voucherInfoTableBody.childElementCount} )`
+
     notifier.__end('Page Has been loaded', 'success')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const $openFormModalBtn = _.createButton('Add', ['btn', 'btn-blue'])
-  async function handleAddFormModal() {
-    await __setUpAddVoucherForm()
-    openModal($addVoucherForm)
-  }
-
-  const $controllers = _.createElement(
+  const $currentPageInfo = _.createHeading('h6')
+  const $pageControllers = _.createElement(
     '',
     '',
     ['controllers'],
-    [$openFormModalBtn, _.createElement('', '', [], [$prevBtn, $nextBtn])]
+    [$currentPageInfo, _.createElement('', '', [], [$prevBtn, $nextBtn])]
   )
 
   const $voucherInfoTable = _.createTable(['voucher-table'], {
@@ -161,23 +142,22 @@ function createHomePage() {
     _.on('click', $nextBtn, handlePageChangeNext)
     _.on('click', $voucherInfoTableBody, handleClickOnInfoWrapper)
     _.on('click', $openFormModalBtn, handleAddFormModal)
-    handlePageChange(
+    await handlePageChange(
       vouchers.data.slice(
         vouchers.currentPage * 20,
         (vouchers.currentPage + 1) * 20
-      ),
-      vouchers.currentPage
+      )
     )
   }
 
-  function __cleanupFunc() {
+  async function __cleanupFunc() {
     _.removeOn('click', $prevBtn, handlePageChangePrev)
     _.removeOn('click', $nextBtn, handlePageChangeNext)
     _.removeOn('click', $voucherInfoTableBody, handleClickOnInfoWrapper)
     _.removeOn('click', $openFormModalBtn, handleAddFormModal)
-    __cleanUpEditVoucherForm()
-    __cleanUpAddVoucherForm()
-    __cleanUpReceiptPaper()
+    await __cleanUpEditVoucherForm()
+    await __cleanUpAddVoucherForm()
+    await __cleanUpReceiptPaper()
   }
 
   const $main = _.createElement(
@@ -185,9 +165,10 @@ function createHomePage() {
     '',
     ['home-page'],
     [
+      $openFormModalBtn,
       $timePeriodHeader,
       $voucherTableContainer,
-      $controllers,
+      $pageControllers,
       $addVoucherForm,
       $receiptPaper,
       $editVoucherForm,

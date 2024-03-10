@@ -7,9 +7,10 @@ import createCustomerDetail from './customers/customerDetail.js'
 import { sortCustomersBy } from './state.js'
 import createAddCustomerForm from './customers/addCustomerForm.js'
 import { openModal } from './general/createModal.js'
+import lockBtn from './helpers/lockBtn.js'
 
 function createCustomersPage() {
-  let customersInfo = []
+  let sortedCustomersData = []
   const $allCustomersBox = _.createElement('', '', ['all-customers'])
 
   const $customerList = _.createElement('ul', '', ['customer-list'])
@@ -45,6 +46,7 @@ function createCustomersPage() {
   const $searchCustomerBtn = _.createButton('Search', ['btn', 'btn-blue'])
 
   async function handleSearchCustomerModal(e) {
+    lockBtn(e.target)
     _.emptyChild($customerList)
     if (searchMode) {
       e.target.textContent = 'Search'
@@ -77,7 +79,7 @@ function createCustomersPage() {
   ])
 
   async function handleSortUsers(e) {
-    customersInfo = await sortCustomersBy(e.target.value)
+    sortedCustomersData = await sortCustomersBy(e.target.value)
     _.emptyChild($customerList)
     appendCustomerRows()
     ioLoadedCount = 10
@@ -99,10 +101,10 @@ function createCustomersPage() {
   )
 
   // auto loader ---------------------------------- start
-  let ioLoadedCount = 10 // stop when customersInfo.length
+  let ioLoadedCount = 10 // stop when sortedCustomersData.length
   let ioScrollBack = false // this is weird, but works ( instead of entry.target.isIntercepting)
   const $intersectionObserver = _.createElement('', '', [
-    'customers-interception-observer',
+    'customers-intersection-observer',
     'text-center',
   ])
 
@@ -112,7 +114,7 @@ function createCustomersPage() {
       if (ioScrollBack) {
         return
       }
-      if (ioLoadedCount > customersInfo.length) {
+      if (ioLoadedCount > sortedCustomersData.length) {
         return
       }
       entries.forEach((entry) => {
@@ -120,7 +122,7 @@ function createCustomersPage() {
         // loaded += 10
         const timer = setTimeout(async () => {
           appendCustomerRows(
-            customersInfo.slice(ioLoadedCount, (ioLoadedCount += 10))
+            sortedCustomersData.slice(ioLoadedCount, (ioLoadedCount += 10))
           )
           $intersectionObserver.textContent = ''
           clearTimeout(timer)
@@ -132,7 +134,7 @@ function createCustomersPage() {
   // auto loader ---------------------------------- end
   async function appendCustomerRows(data) {
     $customerList.appendChild(
-      await createCustomerRows(data || customersInfo.slice(0, 10))
+      await createCustomerRows(data || sortedCustomersData.slice(0, 10))
     )
   }
 
@@ -157,13 +159,13 @@ function createCustomersPage() {
     _.on('click', $searchCustomerBtn, handleSearchCustomerModal)
     _.on('click', $customerList, handleClickOnCustomerList)
     _.on('change', $sortUsersSelect, handleSortUsers)
-    customersInfo = await sortCustomersBy('stars')
+    sortedCustomersData = await sortCustomersBy('stars')
     appendCustomerRows()
     intersectionObserver.observe($intersectionObserver)
   }
 
   async function __cleanupFunc() {
-    customersInfo = []
+    sortedCustomersData = []
     await __cleanUpSearchBox()
     await __cleanUpCustomerDetail()
     await __cleanUpAddCustomerForm()
