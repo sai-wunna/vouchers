@@ -2,15 +2,21 @@
 
 import _ from '../dom/index.js'
 // import createCustomerChart from './customerChart.js'
-import createVoucherCard from './voucherCard.js'
-import { getCustomerAndHisVouchersById } from '../state.js'
-import createEditCustomerForm from './editCustomerForm.js'
-import { openModal } from '../general/createModal.js'
-import createEditVoucherForm from '../general/editVoucherForm.js'
-import { lockNav, unlockNav } from '../general/navLocker.js'
-import countStarsAnimate from '../general/starCounter.js'
+import createVoucherCard from './_ncVoucherCard.js'
+import {
+  getACustomerInfo,
+  getCustomerAndHisVouchersById,
+  state,
+} from '../state.js'
+import createEditCustomerForm from './_mEditCustomerForm.js'
+import { openModal } from '../helpers/createModal.js'
+import createEditVoucherForm from '../general/_mEditVoucherForm.js'
+import { lockNav, unlockNav } from '../helpers/navLocker.js'
+import countStarsAnimate from '../helpers/starCounter.js'
+import { createCustomerRow } from './_ncCustomerRow.js'
 
-function createCustomerDetail($allCustomersBox) {
+function createCustomerDetail(__whenQuitFunc) {
+  let $customerNodeFromList = null
   let customerInfo = null
   let customerVouchers = null
   let cleanMemoTimer = null
@@ -44,10 +50,30 @@ function createCustomerDetail($allCustomersBox) {
       $createdOn,
     ]
   )
+
   // under construction
   // const [$chart, __setUpChart, __cleanUpChart] = createCustomerChart()
+
   const [$editVoucherForm, __setUpEditVoucherForm, __cleanUpEditVoucherForm] =
-    createEditVoucherForm()
+    createEditVoucherForm(__whenDeleteVoucher, __whenUpdateVoucher)
+
+  async function __whenDeleteVoucher() {
+    customerInfo = await getACustomerInfo(customerInfo.id)
+    updateCustomerStars()
+  }
+
+  async function __whenUpdateVoucher(data) {
+    customerInfo = await getACustomerInfo(customerInfo.id)
+    updateCustomerStars()
+    const $updatedNode = await createVoucherCard(data)
+    state.$editingVoucher.replaceWith($updatedNode)
+    state.$editingVoucher = $updatedNode
+  }
+
+  function updateCustomerStars() {
+    $starCounter.textContent = `${customerInfo.stars.toLocaleString()} stars`
+    $customerNodeFromList.lastChild.textContent = `${customerInfo.stars}s`
+  }
 
   const $customerVouchers = _.createElement('', '', ['customer-vouchers'])
 
@@ -55,11 +81,28 @@ function createCustomerDetail($allCustomersBox) {
     $editCustomerForm,
     __setUpEditCustomerForm,
     __cleanUpEditCustomerForm,
-  ] = createEditCustomerForm()
+  ] = createEditCustomerForm(__whenDeleteCustomer, __whenUpdateCustomer)
 
-  function handleBackToAllCustomersPage() {
-    $allCustomersBox.classList.remove('d-none')
-    $main.classList.add('d-none')
+  function __whenDeleteCustomer() {
+    $customerNodeFromList.remove()
+    $editCustomerBtn.disabled = true
+  }
+
+  function __whenUpdateCustomer() {
+    const $newCustomerNode = createCustomerRow({
+      id: customerInfo.id,
+      name: customerInfo.name,
+      address: customerInfo.address,
+      stars: customerInfo.stars,
+      favorite: customerInfo.favorite,
+    })
+    $customerNodeFromList.replaceWith($newCustomerNode)
+    $customerNodeFromList = $newCustomerNode
+    setUpCustomerInfoBox()
+  }
+
+  function handleBackToCustomerPage() {
+    __whenQuitFunc()
     cleanMemoTimer = setTimeout(() => {
       __sleepFunc()
     }, 10000)
@@ -70,11 +113,8 @@ function createCustomerDetail($allCustomersBox) {
     if (e.target.tagName === 'BUTTON') {
       const id = parseInt(e.target.dataset.vid)
       const voucher = customerVouchers.find((vc) => vc.id === id)
-      await __setUpEditVoucherForm(
-        voucher,
-        e.target.parentElement,
-        customerInfo.name
-      )
+      state.$editingVoucher = e.target.parentElement
+      await __setUpEditVoucherForm(voucher, customerInfo.name)
       openModal($editVoucherForm)
       // edit btn evt handler
     } else if (e.target.tagName === 'SPAN') {
@@ -86,7 +126,7 @@ function createCustomerDetail($allCustomersBox) {
   }
 
   async function handleEditCustomerClick() {
-    await __setUpEditCustomerForm(customerInfo, $name, $address, $phone)
+    await __setUpEditCustomerForm(customerInfo)
     openModal($editCustomerForm)
   }
 
@@ -130,6 +170,17 @@ function createCustomerDetail($allCustomersBox) {
     { threshold: 1 }
   )
 
+  function setUpCustomerInfoBox() {
+    $name.textContent = customerInfo.name
+    $address.textContent = `Addr : ${customerInfo.address}`
+    $phone.textContent =
+      customerInfo.phone.length > 0
+        ? `Phone : ${customerInfo.phone.join(',')}`
+        : 'Phone : No Contact'
+    $createdOn.textContent = `Account was created on ${customerInfo.createdOn}`
+    $company.textContent = `Company : ${customerInfo.company || 'Not Know'}`
+  }
+
   async function __sleepFunc() {
     customerInfo = null
     customerVouchers = null
@@ -138,13 +189,15 @@ function createCustomerDetail($allCustomersBox) {
     // under construction
     // await __cleanUpChart()
 
-    _.removeOn('click', $backToCustomersBtn, handleBackToAllCustomersPage)
+    _.removeOn('click', $backToCustomersBtn, handleBackToCustomerPage)
     _.removeOn('click', $customerVouchers, handleClickOnVoucher)
     _.removeOn('click', $editCustomerBtn, handleEditCustomerClick)
   }
 
   async function __setUpFunc(id) {
     clearTimeout(cleanMemoTimer)
+    $editCustomerBtn.disabled = false
+
     if (customerInfo?.id === id) {
       lockNav(`${customerInfo.favorite ? '⭐' : ''}${customerInfo.name}`)
       return
@@ -154,20 +207,13 @@ function createCustomerDetail($allCustomersBox) {
       id
     )
     // store temporary
-    customerVouchers = [...vouchersData]
     customerInfo = { ...customerData }
-
-    const { name, address, phone, createdOn, stars, favorite, company } =
-      customerInfo
+    $customerNodeFromList = _.getNodeById(`cusId-${customerInfo.id}`)
+    customerVouchers = [...vouchersData]
 
     // show info
-    $name.textContent = name
-    $address.textContent = `Addr : ${address}`
-    $phone.textContent =
-      phone.length > 0 ? `Phone : ${phone.join(',')}` : 'Phone : No Contact'
-    $createdOn.textContent = `Account was created on ${createdOn}`
-    $company.textContent = `Company : ${company || 'Not Know'}`
-    await countStarsAnimate($starCounter, stars)
+    setUpCustomerInfoBox()
+    await countStarsAnimate($starCounter, customerInfo.stars)
 
     // setUpChart
     // await __setUpChart(customerInfo)
@@ -177,10 +223,10 @@ function createCustomerDetail($allCustomersBox) {
     ioLoadedCount = 10
     intersectionObserver.observe($intersectionObserver)
 
-    lockNav(`${favorite ? '⭐' : ''}${name}`)
+    lockNav(`${customerInfo.favorite ? '⭐' : ''}${customerInfo.name}`)
 
     _.on('click', $editCustomerBtn, handleEditCustomerClick)
-    _.on('click', $backToCustomersBtn, handleBackToAllCustomersPage)
+    _.on('click', $backToCustomersBtn, handleBackToCustomerPage)
     _.on('click', $customerVouchers, handleClickOnVoucher)
   }
 

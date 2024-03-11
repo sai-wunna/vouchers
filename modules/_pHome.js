@@ -1,24 +1,25 @@
 'use strict'
 
 import _ from './dom/index.js'
-import addVoucherForm from './home/addVoucherForm.js'
-import createReceipt from './home/createReceipt.js'
-import { vouchers, getAVoucher } from './state.js'
-import { createVoucherRows } from './home/createVoucherRow.js'
-import { openModal } from './general/createModal.js'
+import addVoucherForm from './home/_mAddVoucherForm.js'
+import createReceipt from './home/_mReceiptPaper.js'
+import { vouchers, getAVoucher, state } from './state.js'
+import { createVoucherRow, createVoucherRows } from './home/_cVoucherRow.js'
+import { openModal } from './helpers/createModal.js'
 import { calculatePageDate, getFormatDate } from './helpers/getDate.js'
-import createEditVoucherForm from './general/editVoucherForm.js'
+import createEditVoucherForm from './general/_mEditVoucherForm.js'
 import notifier from './notify.js'
+import lockBtn from './helpers/lockBtn.js'
 
-function createHomePage() {
+export default () => {
   const $openFormModalBtn = _.createButton('+ Add', [
     'btn',
     'btn-blue',
     'float-end',
   ])
   async function handleAddFormModal() {
-    await __setUpAddVoucherForm()
     openModal($addVoucherForm)
+    await __setUpAddVoucherForm()
   }
 
   const $timePeriodHeader = _.createHeading('h2', 'December', [
@@ -38,7 +39,7 @@ function createHomePage() {
       vouchers.currentPage -= 1
       $nextBtn.disabled = false
     } else {
-      e.target.disabled = true
+      lockBtn(e.target, 5000)
       notifier.__end('No More Pages', 'warning')
     }
   }
@@ -56,7 +57,7 @@ function createHomePage() {
       vouchers.currentPage += 1
       $prevBtn.disabled = false
     } else {
-      e.target.disabled = true
+      lockBtn(e.target, 5000)
       notifier.__end('No More Pages', 'warning')
     }
   }
@@ -114,14 +115,93 @@ function createHomePage() {
   )
 
   const [$editVoucherForm, __setUpEditVoucherForm, __cleanUpEditVoucherForm] =
-    createEditVoucherForm()
+    createEditVoucherForm(__whenDeleteVoucher, __whenUpdateVoucher)
+
+  function __whenDeleteVoucher() {
+    const vcData = vouchers.data[(vouchers.currentPage + 1) * 20 - 1]
+
+    if (vcData) {
+      $voucherInfoTableBody.appendChild(createVoucherRows([vcData]))
+    }
+
+    $currentPageInfo.textContent = `Page - ${vouchers.currentPage + 1} / ${
+      Math.ceil(vouchers.data.length / 20) || 1
+    } ( ${$voucherInfoTableBody.childElementCount} )`
+
+    $timePeriodHeader.textContent = calculatePageDate(
+      $voucherInfoTableBody.firstChild.dataset.createdOn,
+      $voucherInfoTableBody.lastChild.dataset.createdOn
+    )
+  }
+
+  function __whenUpdateVoucher(data) {
+    const { id, createdOn, goodInfo, paid, paymentMethod, cancelled, name } =
+      data
+
+    let totalAmount = 0
+    let totalCharge = 0
+
+    goodInfo.forEach((info) => {
+      totalAmount += parseInt(info.amount)
+      totalCharge += parseInt(info.charge)
+    })
+
+    const $updatedNode = createVoucherRow(
+      id,
+      name,
+      totalAmount,
+      createdOn,
+      totalCharge,
+      paid,
+      paymentMethod,
+      cancelled
+    )
+
+    state.$editingVoucher.replaceWith($updatedNode)
+    state.$editingVoucher = $updatedNode
+  }
+
   const [$addVoucherForm, __setUpAddVoucherForm, __cleanUpAddVoucherForm] =
-    addVoucherForm()
+    addVoucherForm(__whenCreateNewVoucher)
+
+  function __whenCreateNewVoucher() {
+    const voucher = vouchers.data[0]
+
+    if ($voucherInfoTableBody.childElementCount === 20) {
+      $voucherInfoTableBody.lastChild.remove()
+    }
+
+    if (vouchers.currentPage === 0) {
+      $voucherInfoTableBody.insertBefore(
+        createVoucherRows([voucher]),
+        $voucherInfoTableBody.firstChild
+      )
+    } else {
+      const vcData = vouchers.data[vouchers.currentPage * 20]
+      $voucherInfoTableBody.insertBefore(
+        createVoucherRows([vcData]),
+        $voucherInfoTableBody.firstChild
+      )
+    }
+
+    $currentPageInfo.textContent = `Page - ${vouchers.currentPage + 1} / ${
+      Math.ceil(vouchers.data.length / 20) || 1
+    } ( ${$voucherInfoTableBody.childElementCount} )`
+
+    $timePeriodHeader.textContent = calculatePageDate(
+      $voucherInfoTableBody.firstChild.dataset.createdOn,
+      $voucherInfoTableBody.lastChild.dataset.createdOn
+    )
+  }
+
   const [$receiptPaper, __setUpReceiptPaper, __cleanUpReceiptPaper] =
     createReceipt()
 
   async function handleClickOnInfoWrapper(e) {
     if (e.target.tagName !== 'TD') return
+
+    state.$editingVoucher = e.target.parentElement
+
     const id = parseInt(e.target.parentElement.dataset.vid)
     const { customer, receipt } = await getAVoucher(id)
     if (e.target.dataset.edit) {
@@ -177,5 +257,3 @@ function createHomePage() {
 
   return [$main, __setupFunc, __cleanupFunc]
 }
-
-export default createHomePage

@@ -1,25 +1,17 @@
 'use strict'
 
-import createVoucherCard from '../customers/voucherCard.js'
 import _ from '../dom/index.js'
 import convertToGoodInfoData from '../helpers/convertToGoodInfoData.js'
-import { createModal } from './createModal.js'
+import { createModal } from '../helpers/createModal.js'
 import notifier from '../notify.js'
-import {
-  createVoucherRow,
-  createVoucherRows,
-} from '../home/createVoucherRow.js'
-import {
-  deleteVoucher,
-  getACustomerInfo,
-  updateVoucher,
-  vouchers,
-} from '../state.js'
-import { calculatePageDate, getFormatDate } from '../helpers/getDate.js'
+import { deleteVoucher, updateVoucher, state } from '../state.js'
+import { getFormatDate } from '../helpers/getDate.js'
 import lockBtn from '../helpers/lockBtn.js'
 
-function createEditVoucherForm() {
-  let $prevVoucher = null
+export default function createEditVoucherForm(
+  __whenDeleteVoucher,
+  __whenUpdateVoucher
+) {
   let voucherInfo = null
 
   // here need to setup
@@ -34,28 +26,9 @@ function createEditVoucherForm() {
       notifier.__end('No Data Found', 'error')
       return
     }
-    $prevVoucher.remove()
-
-    if ($prevVoucher.tagName === 'TR') {
-      const $tBody = _.getNode('.data-info-box')
-
-      const vcData = vouchers.data[(vouchers.currentPage + 1) * 20 - 1]
-
-      if (vcData) {
-        $tBody.appendChild(createVoucherRows([vcData]))
-      }
-
-      _.getNode('.controllers').firstChild.textContent = `Page - ${
-        vouchers.currentPage + 1
-      } / ${Math.ceil(vouchers.data.length / 20) || 1} ( ${
-        $tBody.childElementCount
-      } 📄 )`
-
-      _.getNode('.time-period-header').textContent = calculatePageDate(
-        $tBody.firstChild.dataset.createdOn,
-        $tBody.lastChild.dataset.createdOn
-      )
-    }
+    state.$editingVoucher.remove()
+    state.$editingVoucher = null
+    await __whenDeleteVoucher()
 
     notifier.__end('Successfully Deleted', 'success')
   }
@@ -235,54 +208,14 @@ function createEditVoucherForm() {
         notifier.__end('Something went wrong', 'error')
         return
       }
-      replaceUpdatedNode(updatedData)
-      updateCustomerStars(await getACustomerInfo(updatedData.customerId))
+
+      await __whenUpdateVoucher(updatedData)
+
       notifier.__end('Updated Successfully', 'success')
     } catch (error) {
       console.log(error)
       notifier.__end('Something went wrong', 'error')
     }
-  }
-
-  function updateCustomerStars(customer) {
-    const $starCounter = _.getNode('.star-counter')
-    if (!$starCounter) return
-
-    $starCounter.textContent = `${customer.stars} stars`
-
-    _.getNodeById(
-      `cusId-${customer.id}`
-    ).lastChild.textContent = `${customer.stars}s`
-  }
-
-  async function replaceUpdatedNode(data) {
-    const { id, createdOn, goodInfo, paid, paymentMethod, cancelled } = data
-
-    let $updatedNode
-    if ($prevVoucher.tagName === 'TR') {
-      const name = $customerName.textContent
-      let totalAmount = 0
-      let totalCharge = 0
-
-      goodInfo.forEach((info) => {
-        totalAmount += parseInt(info.amount)
-        totalCharge += parseInt(info.charge)
-      })
-
-      $updatedNode = await createVoucherRow(
-        id,
-        name,
-        totalAmount,
-        createdOn.split('-')[2],
-        totalCharge,
-        paid,
-        paymentMethod,
-        cancelled
-      )
-    } else {
-      $updatedNode = await createVoucherCard(data)
-    }
-    $prevVoucher.replaceWith($updatedNode)
   }
 
   const $cancelCheckBox = _.createInput(
@@ -321,18 +254,18 @@ function createEditVoucherForm() {
   const [$modal, __cleanUpModal] = createModal($form, __sleepFunc)
 
   function __sleepFunc() {
-    _.emptyChild($goodInfoBoxWrapper)
-    $prevVoucher = voucherInfo = null
+    state.$editingVoucher = voucherInfo = null
     boxNumber = 0
+
     while (boxEvtCleaners[0]) {
       const [cleaner1, cleaner2] = boxEvtCleaners.pop()
       cleaner1()
       cleaner2()
     }
+    _.emptyChild($goodInfoBoxWrapper)
   }
 
-  function __setUpFunc(data, $prevVoucherNode, name) {
-    $prevVoucher = $prevVoucherNode
+  function __setUpFunc(data, name) {
     voucherInfo = data
     //setup header
     const { id, goodInfo, paid, createdOn, note, cancelled } = data
@@ -366,5 +299,3 @@ function createEditVoucherForm() {
 
   return [$modal, __setUpFunc, __cleanUpFunc]
 }
-
-export default createEditVoucherForm

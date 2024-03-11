@@ -21,7 +21,7 @@ function createVoucherRow(
     classList.push('cancelled-voucher-info')
   }
 
-  const $date = _.createElement('td', createdOn.split('-')[2], [
+  const $date = _.createElement('td', createdOn.substring(5), [
     'vc-created-date',
   ])
   $date.dataset.edit = true

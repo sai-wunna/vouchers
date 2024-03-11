@@ -1,12 +1,16 @@
 'use strict'
 
 import _ from './dom/index.js'
-import { customers, importedFileData, vouchers } from './state.js'
+import { customers, state, vouchers } from './state.js'
 import notifier from './notify.js'
-import downloadBox from './fileManager/download.js'
+import downloadBox from './fileManager/_cDownloadBox.js'
 import lockBtn from './helpers/lockBtn.js'
 
-function fileManager() {
+export default () => {
+  const {
+    importedFileData: { totalVouchers, totalCustomers, version, timePeriod },
+  } = state
+
   const expectedFileVersion = document.cookie
     .split('; ')
     .find((row) => row.startsWith('expectedFileVersion='))
@@ -17,27 +21,19 @@ function fileManager() {
   const $importFileHeader = _.createHeading('h3', 'Imported File Data')
   const $ifTotalVouchers = _.createElement(
     'p',
-    `${
-      importedFileData.totalVouchers
-        ? `Total Vouchers Recorded : ${importedFileData.totalVouchers}`
-        : '---'
-    }`
+    `${totalVouchers ? `Total Vouchers Recorded : ${totalVouchers}` : '---'}`
   )
   const $ifTotalCustomers = _.createElement(
     'p',
-    `${
-      importedFileData.totalCustomers
-        ? `Total Customers Recorded : ${importedFileData.totalCustomers}`
-        : '---'
-    }`
+    `${totalCustomers ? `Total Customers Recorded : ${totalCustomers}` : '---'}`
   )
   const $ifTimePeriod = _.createElement(
     'p',
-    importedFileData.timePeriod ? `${importedFileData.timePeriod}` : '---'
+    timePeriod ? `${timePeriod}` : '---'
   )
   const $ifVersion = _.createElement(
     'p',
-    importedFileData.version ? `Version : ${importedFileData.version}` : '---'
+    version ? `Version : ${version}` : '---'
   )
   const $importedFileInfoBox = _.createElement(
     '',
@@ -47,7 +43,7 @@ function fileManager() {
   )
 
   let fileData = null
-  const $fileIpLabel = _.createLabel('Select File', 'import_file_input', [
+  const $fileIpLabel = _.createLabel('No File Selected', 'import_file_input', [
     'file-input-label',
   ])
   const $fileInput = _.createInput('file', ['file-input'])
@@ -78,6 +74,7 @@ function fileManager() {
         if (expectedFileVersion && data.version !== expectedFileVersion) {
           notifier.on('versionConflict', 'warning', 5000)
         }
+        $fileIpLabel.textContent = file.name
       } catch (error) {
         notifier.on('jsonFileOnly', 'warning')
         fileData = null
@@ -96,10 +93,10 @@ function fileManager() {
     if (!fileData) return
     lockBtn(e.target, 5000)
     notifier.__start('Building Data', 'info')
-    importedFileData.totalVouchers = fileData.vouchers.length
-    importedFileData.totalCustomers = fileData.customers.length
-    importedFileData.timePeriod = fileData.timePeriod
-    importedFileData.version = fileData.version
+    state.importedFileData.totalVouchers = fileData.vouchers.length
+    state.importedFileData.totalCustomers = fileData.customers.length
+    state.importedFileData.timePeriod = fileData.timePeriod
+    state.importedFileData.version = fileData.version
 
     vouchers.data.splice(0, vouchers.data.length, ...fileData.vouchers)
     customers.splice(0, customers.length, ...fileData.customers)
@@ -134,10 +131,7 @@ function fileManager() {
       await __setUpDownloadBox()
       downloadBoxAppended = true
     }
-    if (
-      expectedFileVersion !== undefined &&
-      expectedFileVersion !== importedFileData.version
-    ) {
+    if (expectedFileVersion !== undefined && expectedFileVersion !== version) {
       $exceptedFileVersion.textContent = `Excepted Version : ${expectedFileVersion}`
     }
     _.on('change', $fileInput, handleFileChange)
@@ -154,5 +148,3 @@ function fileManager() {
 
   return [$main, __setUpFunc, __cleanUpFunc]
 }
-
-export default fileManager

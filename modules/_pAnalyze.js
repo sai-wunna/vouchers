@@ -6,7 +6,7 @@ import _ from './dom/index.js'
 import lockNav from './general/navLocker.js'
 import { customers, tableData, vouchers } from './state.js'
 
-function createAnalyzePage() {
+export default () => {
   const $analyzeDateHeading = _.createHeading('h6')
   const $analyzeHeader = _.createElement(
     '',
@@ -69,5 +69,3 @@ function createAnalyzePage() {
 
   return [$main, __setUpFunc, __cleanUpFunc]
 }
-
-export default createAnalyzePage

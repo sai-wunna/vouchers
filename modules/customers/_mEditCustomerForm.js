@@ -2,16 +2,13 @@
 
 import { deleteCustomer, updateCustomer } from '../state.js'
 import _ from '../dom/index.js'
-import { createModal } from '../general/createModal.js'
+import { createModal } from '../helpers/createModal.js'
 import notifier from '../notify.js'
-import { createCustomerRow } from './createCustomerRow.js'
-import { lockNav } from '../general/navLocker.js'
+import { lockNav } from '../helpers/navLocker.js'
+import lockBtn from '../helpers/lockBtn.js'
 
-function createEditCustomerInfoForm() {
-  let customerInfo = null,
-    $prevName = null,
-    $prevAddress = null,
-    $prevPhone = null
+function createEditCustomerForm(__whenDeleteCustomer, __whenUpdateCustomer) {
+  let customerInfo = null
 
   const $deleteBtn = _.createButton('Delete', ['btn-corner-left', 'btn-red'])
   async function handleDelete(e) {
@@ -21,7 +18,8 @@ function createEditCustomerInfoForm() {
         notifier.on('sww', 'error')
         return
       }
-      _.getNodeById(`cusId-${customerInfo.id}`)?.remove()
+      await __whenDeleteCustomer()
+      $updateBtn.disabled = true
       notifier.on('deleteComplete', 'success')
       lockNav('Deleted Customer !!!')
     } catch (error) {
@@ -71,33 +69,19 @@ function createEditCustomerInfoForm() {
     ]
   )
 
-  async function handleUpdate() {
+  async function handleUpdate(e) {
+    lockBtn(e.target, 3000)
     try {
       notifier.__start('Updating User Info')
-      const { id, stars } = customerInfo
-      const name = $nameIp.value
-      const address = $addressIp.value
-      const phone = $phoneIp.value.split(',')
-      customerInfo.name = name
-      $prevName.textContent = name
-      customerInfo.address = $prevAddress.textContent = address
-      customerInfo.phone = $prevPhone.textContent = phone
-      customerInfo.favorite = $favoriteIp.checked
-      await updateCustomer(customerInfo)
 
-      // if customer info in list , then update dom
-      const customerNode = _.getNodeById(`cusId-${id}`)
-      if (customerNode) {
-        customerNode.replaceWith(
-          await createCustomerRow({
-            id,
-            name,
-            address,
-            stars,
-            favorite: customerInfo.favorite,
-          })
-        )
-      }
+      customerInfo.name = $nameIp.value
+      customerInfo.address = $addressIp.value
+      customerInfo.phone = $phoneIp.value.split(',')
+      customerInfo.favorite = $favoriteIp.checked
+
+      await updateCustomer(customerInfo)
+      await __whenUpdateCustomer()
+
       lockNav(`${customerInfo.favorite ? '⭐' : ''}${customerInfo.name}`)
       notifier.__end('Successfully Updated', 'success')
     } catch (error) {
@@ -111,32 +95,25 @@ function createEditCustomerInfoForm() {
     _.removeOn('click', $deleteBtn, handleDelete)
   })
 
-  function __setUpFunc(
-    customer,
-    $prevNameNode,
-    $prevAddressNode,
-    $prevPhoneNode
-  ) {
+  function __setUpFunc(customer) {
+    $updateBtn.disabled = false
     _.on('click', $deleteBtn, handleDelete)
     _.on('click', $updateBtn, handleUpdate)
     // store temporary fo update use
     customerInfo = customer // take ref and update this to reflect
-    $prevName = $prevNameNode
-    $prevAddress = $prevAddressNode
-    $prevPhone = $prevPhoneNode
     // set up form value
     $nameIp.value = customerInfo.name
-    $addressIp.value = $prevAddressNode.textContent
-    $phoneIp.value = $prevPhoneNode.textContent
+    $addressIp.value = customerInfo.address
+    $phoneIp.value = customerInfo.phone.join(', ')
     $favoriteIp.checked = customerInfo.favorite
   }
 
   function __cleanUpFunc() {
     __cleanUpModal()
-    customerInfo = $prevName = $prevAddress = $prevPhone = null
+    customerInfo = null
   }
 
   return [$main, __setUpFunc, __cleanUpFunc]
 }
 
-export default createEditCustomerInfoForm
+export default createEditCustomerForm

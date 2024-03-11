@@ -1,6 +1,5 @@
 'use strict'
 
-import { createVoucherRow, createVoucherRows } from './createVoucherRow.js'
 import {
   saveNewCustomer,
   saveNewVoucher,
@@ -10,12 +9,11 @@ import {
 } from '../state.js'
 import _ from '../dom/index.js'
 import notifier from '../notify.js'
-import { createModal } from '../general/createModal.js'
+import { createModal } from '../helpers/createModal.js'
 import convertToGoodInfoData from '../helpers/convertToGoodInfoData.js'
 import lockBtn from '../helpers/lockBtn.js'
-import { calculatePageDate } from '../helpers/getDate.js'
 
-function createVoucherForm() {
+export default (__whenCreateNewVoucher) => {
   const $dateIp = _.createInput('date', ['date-input'], '', {
     value: new Date().toISOString().substr(0, 10),
   })
@@ -261,66 +259,15 @@ function createVoucherForm() {
         paymentMethod,
       }
 
-      const vcId = await saveNewVoucher(data, totalCharge)
+      await saveNewVoucher(data, totalCharge)
 
-      await updatePageData(
-        vcId,
-        totalAmount,
-        date,
-        totalCharge,
-        paid,
-        paymentMethod
-      )
+      await __whenCreateNewVoucher()
 
       notifier.__end('Successfully Created', 'success')
     } catch (error) {
       console.log(error)
       notifier.__end('Something went wrong', 'error')
     }
-  }
-
-  function updatePageData(
-    vcId,
-    totalAmount,
-    date,
-    totalCharge,
-    paid,
-    paymentMethod
-  ) {
-    const $tBody = _.getNode('.data-info-box')
-
-    if ($tBody.childElementCount === 20) {
-      $tBody.lastChild.remove()
-    }
-
-    if (vouchers.currentPage === 0) {
-      $tBody.insertBefore(
-        createVoucherRow(
-          vcId,
-          customerInfo.name,
-          totalAmount,
-          date,
-          totalCharge,
-          paid,
-          paymentMethod
-        ),
-        $tBody.firstChild
-      )
-    } else {
-      const vcData = vouchers.data[vouchers.currentPage * 20]
-      $tBody.insertBefore(createVoucherRows([vcData]), $tBody.firstChild)
-    }
-
-    _.getNode('.controllers').firstChild.textContent = `Page - ${
-      vouchers.currentPage + 1
-    } / ${Math.ceil(vouchers.data.length / 20) || 1} ( ${
-      $tBody.childElementCount
-    } 📄 )`
-
-    _.getNode('.time-period-header').textContent = calculatePageDate(
-      $tBody.firstChild.dataset.createdOn,
-      $tBody.lastChild.dataset.createdOn
-    )
   }
 
   const $form = _.createForm(
@@ -377,6 +324,7 @@ function createVoucherForm() {
     _.on('click', $removeGoodInfoBoxBtn, handleRemoveBox)
     _.on('input', $nameIp, handleNameSearch)
     _.on('click', $submitButton, handleSubmit)
+    $nameIp.focus()
   }
 
   function __cleanUpFunc() {
@@ -385,5 +333,3 @@ function createVoucherForm() {
 
   return [$main, __setUpFunc, __cleanUpFunc]
 }
-
-export default createVoucherForm

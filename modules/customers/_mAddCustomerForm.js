@@ -2,12 +2,11 @@
 
 import { saveNewCustomer } from '../state.js'
 import _ from '../dom/index.js'
-import { createModal } from '../general/createModal.js'
+import { createModal } from '../helpers/createModal.js'
 import notifier from '../notify.js'
-import { createCustomerRow } from './createCustomerRow.js'
 import { getFormatDate } from '../helpers/getDate.js'
 
-function createAddCustomerForm($customerList) {
+export default () => {
   const $createBtn = _.createButton('Create', [
     'btn',
     'btn-blue',
@@ -44,36 +43,27 @@ function createAddCustomerForm($customerList) {
       const phone = $phoneIp.value.split(',')
       const company = $companyIp.value
       const date = getFormatDate()
-      const newCustomer = await saveNewCustomer(
-        name,
-        address,
-        phone,
-        date,
-        company
-      )
-      const $newCustomer = await createCustomerRow(newCustomer)
-      $customerList.insertBefore($newCustomer, $customerList.firstChild)
+      await saveNewCustomer(name, address, phone, date, company)
+      await __whenCreateNewCustomer()
       notifier.__end('Successfully Created', 'success')
     } catch (error) {
-      console.log(error)
       notifier.__end('Something went wrong', 'error')
     }
   }
 
+  const [$main, __cleanUpModal] = createModal($form, () => {
+    _.removeOn('click', $createBtn, handleClick)
+    $nameIp.value = $addressIp.value = $phoneIp.value = ''
+  })
+
   function __setUpFunc() {
+    $nameIp.focus()
     _.on('click', $createBtn, handleClick)
   }
 
   function __cleanUpFunc() {
     __cleanUpModal()
   }
-  // remove listener when modal close
-  const [$main, __cleanUpModal] = createModal($form, () => {
-    _.removeOn('click', $createBtn, handleClick)
-    $nameIp.value = $addressIp.value = $phoneIp.value = ''
-  })
 
   return [$main, __setUpFunc, __cleanUpFunc]
 }
-
-export default createAddCustomerForm

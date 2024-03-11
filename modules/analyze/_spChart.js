@@ -1,11 +1,12 @@
 'use strict'
 
 import _ from '../dom/index.js'
-import createConfigChartBox from './configChart.js'
-import { chartConfig, getChartDataByPeriod } from '../state.js'
+import createConfigChartBox from './_cConfigChart.js'
+import { state, getChartDataByPeriod } from '../state.js'
 import { unlockNav } from '../general/navLocker.js'
 
 function createAnalyzeChart($salesTable) {
+  const { chartConfig } = state
   let cleanMemoTimer = null
   const [$configChartBox, __setUpConfigBox, __cleanUpConfigBox] =
     createConfigChartBox(handleUpdate)

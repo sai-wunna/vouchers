@@ -6,7 +6,7 @@ import { vouchers, customers } from '../state.js'
 import { getDayName, getFormatDate } from '../helpers/getDate.js'
 import lockBtn from '../helpers/lockBtn.js'
 
-function downloadBox() {
+export default () => {
   const $currentDataHeading = _.createHeading('h3', 'Current Data')
   const $cdTotalVouchers = _.createElement(
     'p',
@@ -103,5 +103,3 @@ function downloadBox() {
 
   return [$downloadBox, __setUpFunc, __cleanUpFunc]
 }
-
-export default downloadBox

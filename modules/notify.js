@@ -30,15 +30,14 @@ class Notify {
   #progressAlertType = null
 
   constructor(doc, countLimit = 3) {
-    this._ = doc
     this.#countLimit = countLimit
-    this.#$progressLoader = this._.createElement('div', '', ['progress-alert'])
+    this.#$progressLoader = _.createElement('div', '', ['progress-alert'])
   }
 
   on(msg = 'invalid', type = 'success', period = 3000) {
     if (this.#currentCount >= this.#countLimit) return
     this.#currentCount += 1
-    const $alertBox = this._.createElement('div', this.#alertMessages[msg], [
+    const $alertBox = _.createElement('div', this.#alertMessages[msg], [
       'custom-alert-box',
       `alert-${type}`,
     ])
@@ -108,4 +107,4 @@ class Notify {
   }
 }
 
-export default new Notify(_)
+export default new Notify()

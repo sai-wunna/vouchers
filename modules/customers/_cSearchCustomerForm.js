@@ -2,12 +2,19 @@
 
 import { searchCustomer } from '../state.js'
 import _ from '../dom/index.js'
-import { createCustomerRows } from './createCustomerRow.js'
+import { createCustomerRows } from './_ncCustomerRow.js'
 
-function createSearchBox($customerList) {
-  // here handle
-
+export default ($customerList) => {
   let spamBlocker = null
+
+  const $searchIp = _.createInput(
+    'search',
+    ['form-search'],
+    'search_customer_ip',
+    {
+      placeholder: 'type here to search . . .',
+    }
+  )
   function handleSearch(e) {
     _.emptyChild($customerList)
     clearTimeout(spamBlocker)
@@ -21,10 +28,6 @@ function createSearchBox($customerList) {
       $customerList.appendChild($customers)
     }, 300)
   }
-
-  const $searchIp = _.createInput('search', ['form-search'], '', {
-    placeholder: 'type here to search . . .',
-  })
 
   const $searchTypeSelect = _.createSelect(['search-type-select'], '', [
     { value: 'name', text: 'Name' },
@@ -55,5 +58,3 @@ function createSearchBox($customerList) {
 
   return [$searchBox, _setUpFunc, _cleanUpFunc]
 }
-
-export default createSearchBox

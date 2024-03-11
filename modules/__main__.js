@@ -1,7 +1,7 @@
 'use strict'
 import _ from './dom/index.js'
 import notifier from './notify.js'
-import $loadingPage from './general/loadingPage.js'
+import $loadingPage from './general/_ncLoadingPage.js'
 
 // ---
 ;(() => {
@@ -23,7 +23,7 @@ import $loadingPage from './general/loadingPage.js'
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
     setActiveNav(e.target)
-    switchPage((await import('./home.js')).default)
+    switchPage((await import('./_pHome.js')).default)
     updateTitle('Home')
   })
 
@@ -35,7 +35,7 @@ import $loadingPage from './general/loadingPage.js'
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
     setActiveNav(e.target)
-    switchPage((await import('./customers.js')).default)
+    switchPage((await import('./_pCustomers.js')).default)
     updateTitle('Customers')
   })
 
@@ -48,7 +48,7 @@ import $loadingPage from './general/loadingPage.js'
     // $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
     // setActiveNav(e.target)
-    // switchPage((await import('./analyze.js')).default)
+    // switchPage((await import('./_pAnalyze.js')).default)
     // updateTitle('Analyze')
   })
 
@@ -60,7 +60,7 @@ import $loadingPage from './general/loadingPage.js'
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
     setActiveNav(e.target)
-    switchPage((await import('./fileManager.js')).default)
+    switchPage((await import('./_pFileManager.js')).default)
     updateTitle('File Manager')
   })
 
@@ -95,14 +95,14 @@ import $loadingPage from './general/loadingPage.js'
     document.title = page
   }
 
-  // window.addEventListener('beforeunload', function (e) {
-  //   e.preventDefault()
-  //   e.returnValue = ''
-  //   return ''
-  // })
+  _.on('beforeunload', window, (e) => {
+    e.preventDefault()
+    e.returnValue = ''
+    return ''
+  })
   ;(async () => {
-    $pageWrapper.appendChild(_.createElement('br'))
+    $pageWrapper.appendChild(_.createNode('br'))
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
-    switchPage((await import('./home.js')).default)
+    switchPage((await import('./_pHome.js')).default)
   })()
 })()

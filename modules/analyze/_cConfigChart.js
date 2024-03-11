@@ -1,9 +1,10 @@
 'use strict'
 
 import _ from '../dom/index.js'
-import { chartConfig } from '../state.js'
+import { state } from '../state.js'
 
 function configChartBox(handleUpdate) {
+  const { chartConfig } = state
   const $toggleConfigBoxBtn = _.createButton('Customize', ['btn', 'btn-blue'])
 
   const $chartTypeLb = _.createLabel('Type', 'chart_conf_type', ['form-label'])

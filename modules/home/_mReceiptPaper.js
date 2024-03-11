@@ -1,13 +1,13 @@
 'use strict'
 
 import _ from '../dom/index.js'
-import { createModal } from '../general/createModal.js'
+import { createModal } from '../helpers/createModal.js'
 import {
   tHeader,
   convertToTBDataNTotalAmount,
 } from '../helpers/receiptTBodyDataParser.js'
 
-function createReceipt() {
+export default () => {
   // header
   const $vid = _.createElement('small')
   const $receiptHeader = _.createElement(
@@ -96,7 +96,11 @@ function createReceipt() {
     [$receiptHeader, $receiptBody, $receiptFooter]
   )
 
-  const [$main, modalEvtCleaner] = createModal($box)
+  const [$main, __cleanUpModal] = createModal($box, __sleepFunc)
+
+  function __sleepFunc() {
+    _.on('click', $logo, toggleSecretBox)
+  }
 
   function __setUpFunc(customer, receipt) {
     const { name, address, phone } = customer
@@ -124,11 +128,9 @@ function createReceipt() {
   }
 
   function __cleanUpFunc() {
-    modalEvtCleaner()
+    __cleanUpModal()
     _.removeOn('click', $logo, toggleSecretBox)
   }
 
   return [$main, __setUpFunc, __cleanUpFunc]
 }
-// here need to add node , setupFunc , cleanUpFunc
-export default createReceipt

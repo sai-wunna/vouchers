@@ -1,18 +1,21 @@
 'use strict'
 
 import _ from './dom/index.js'
-import { createCustomerRows } from './customers/createCustomerRow.js'
-import searchCustomerForm from './customers/searchCustomerForm.js'
-import createCustomerDetail from './customers/customerDetail.js'
-import { sortCustomersBy } from './state.js'
-import createAddCustomerForm from './customers/addCustomerForm.js'
-import { openModal } from './general/createModal.js'
+import {
+  createCustomerRow,
+  createCustomerRows,
+} from './customers/_ncCustomerRow.js'
+import searchCustomerForm from './customers/_cSearchCustomerForm.js'
+import createCustomerDetail from './customers/_spCustomerDetail.js'
+import { customers, sortCustomersBy } from './state.js'
+import createAddCustomerForm from './customers/_mAddCustomerForm.js'
+import { openModal } from './helpers/createModal.js'
 import lockBtn from './helpers/lockBtn.js'
 
-function createCustomersPage() {
+export default () => {
   let sortedCustomersData = []
-  const $allCustomersBox = _.createElement('', '', ['all-customers'])
 
+  const $allCustomersBox = _.createElement('', '', ['all-customers'])
   const $customerList = _.createElement('ul', '', ['customer-list'])
 
   async function handleClickOnCustomerList(e) {
@@ -22,7 +25,6 @@ function createCustomersPage() {
     const id = e.target.id || e.target.parentElement.id
 
     await __setUpCustomerDetail(parseInt(id.split('-')[1]))
-    // here go to customer detail ( toggle components )
     $allCustomersBox.classList.add('d-none')
     $customerDetail.classList.remove('d-none')
   }
@@ -31,15 +33,25 @@ function createCustomersPage() {
     searchCustomerForm($customerList)
 
   const [$addCustomerForm, __setUpAddCustomerForm, __cleanUpAddCustomerForm] =
-    createAddCustomerForm($customerList)
+    createAddCustomerForm(__whenCreateNewCustomer)
+
+  async function __whenCreateNewCustomer() {
+    const $newCustomer = await createCustomerRow(customers[0])
+    $customerList.insertBefore($newCustomer, $customerList.firstChild)
+  }
 
   const [$customerDetail, __setUpCustomerDetail, __cleanUpCustomerDetail] =
-    createCustomerDetail($allCustomersBox)
+    createCustomerDetail(__whenQuitSubPage)
+
+  function __whenQuitSubPage() {
+    $allCustomersBox.classList.remove('d-none')
+    $customerDetail.classList.add('d-none')
+  }
 
   const $addCustomerBtn = _.createButton('Add', ['btn', 'btn-blue'])
   function handleAddCustomerModal() {
-    __setUpAddCustomerForm()
     openModal($addCustomerForm)
+    __setUpAddCustomerForm()
   }
 
   let searchMode = false
@@ -65,7 +77,8 @@ function createCustomersPage() {
       $sortSelectBox.classList.add('d-none')
       $addCustomerBtn.classList.add('d-none')
       e.target.classList.add('btn-red')
-      // reset observer
+      _.getNodeOn($searchCustomerForm, '#search_customer_ip').focus() // this is not that good
+      // remove observer
       intersectionObserver.unobserve($intersectionObserver)
     }
     searchMode = !searchMode
@@ -178,5 +191,3 @@ function createCustomersPage() {
 
   return [$main, __setupFunc, __cleanupFunc]
 }
-
-export default createCustomersPage

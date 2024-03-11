@@ -20,12 +20,14 @@ function getMonthName(dateStr) {
 }
 // return newer date first
 function calculatePageDate(firstDate, lastDate) {
+  if (firstDate === lastDate) {
+    return `Sales of ${firstDate.replaceAll('-', '/').substring(0, 7)}`
+  }
+
   const [y1, m1] = firstDate.split('-').map((item) => Number(item))
   const [y2, m2] = lastDate.split('-').map((item) => Number(item))
 
-  if (y1 === y2 && m1 === m2) {
-    return 'Sales Of This Month'
-  } else if (y1 === y2) {
+  if (y1 === y2) {
     return `${monthNames[m1 - 1]} - ${monthNames[m2 - 1]}`
   } else if (m1 === m2) {
     return 'Sales Of This Month'

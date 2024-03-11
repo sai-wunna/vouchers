@@ -1,30 +1,35 @@
-import { tableData, chartBaseSetUp, chartData } from './data.js' // temporary
-
-//--------rules
 // -- all data must be unshift to arr, to make newer first
 
 // data.json : { customers : [], vouchers : [], chartConfig : {}  : chartBaseSetUp : {} }
 // then calculate and store to state
 
+const state = {
+  $editingVoucher: null,
+  importedFileData: {
+    totalVouchers: 0,
+    totalCustomers: 0,
+    version: '',
+    timePeriod: '',
+  },
+  chartConfig: {
+    chartType: 'line',
+    datasetsConf: {
+      borderWidth: 1,
+      tension: 0.5,
+      pointRadius: 3,
+      fill: 'origin',
+    },
+  },
+}
 const customers = []
 const vouchers = {
   currentPage: 0,
   data: [],
 }
-const chartConfig = {
-  chartType: 'line',
-  datasetsConf: {
-    borderWidth: 1,
-    tension: 0.5,
-    pointRadius: 3,
-    fill: 'origin',
-  },
-}
+
 // const tableData = {}
 // const chartBaseSetUp = {}
 // const chartData = {}
-
-const importedFileData = {}
 
 // ------- handle vouchers start -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
 
@@ -107,7 +112,7 @@ async function deleteVoucher(vid) {
   }
   return true
 }
-
+// | helper of upper one |
 function updateStarsOfCustomerOnDeleteVoucher(voucher) {
   const customerIdx = customers.findIndex(
     (cus) => cus.id === voucher.customerId
@@ -334,13 +339,10 @@ async function initiateState({
 }
 
 export {
-  importedFileData,
+  state,
   // ---------
   customers,
   vouchers,
-  chartConfig,
-  chartData,
-  tableData,
   // --------
   initiateChartData,
   // ----- voucher
