@@ -26,12 +26,36 @@ function createEditCustomerForm(__whenDeleteCustomer, __whenUpdateCustomer) {
       console.log(error)
     }
   }
+
   const $updateBtn = _.createButton('Update', [
     'btn',
     'btn-blue',
     'float-end',
     'm-1',
   ])
+  async function handleUpdate(e) {
+    lockBtn(e.target, 3000)
+    try {
+      notifier.__start('Updating User Info')
+
+      customerInfo.name = $nameIp.value
+      customerInfo.address = $addressIp.value
+      customerInfo.phone =
+        $phoneIp.value.trim().length > 0 ? $phoneIp.value.split(',') : ''
+      customerInfo.favorite = $favoriteIp.checked
+      customerInfo.company = $companyIp.value
+
+      await updateCustomer(customerInfo)
+      await __whenUpdateCustomer()
+
+      lockNav(`${customerInfo.favorite ? '✨ ' : ''}${customerInfo.name}`)
+      notifier.__end('Successfully Updated', 'success')
+    } catch (error) {
+      notifier.__end('Something went wrong', 'error')
+      console.log(error)
+    }
+  }
+
   const $nameIp = _.createInput('', ['form-control'], 'edit_cus_name')
   const $addressIp = _.createInput('', ['form-control'], 'edit_cus_address')
   const $phoneIp = _.createInput('', ['form-control'], 'edit_cus_phone')
@@ -40,6 +64,7 @@ function createEditCustomerForm(__whenDeleteCustomer, __whenUpdateCustomer) {
     ['form-check'],
     'edit_cus_favorite'
   )
+  const $companyIp = _.createInput('', ['form-control'], 'edit_cus_company')
 
   const $form = _.createElement(
     '',
@@ -54,6 +79,8 @@ function createEditCustomerForm(__whenDeleteCustomer, __whenUpdateCustomer) {
       $addressIp,
       _.createLabel('Phone', 'edit_cus_phone', ['form-label']),
       $phoneIp,
+      _.createLabel('Company', 'edit_cus_company', ['form-label']),
+      $companyIp,
       _.createElement(
         '',
         '',
@@ -69,31 +96,12 @@ function createEditCustomerForm(__whenDeleteCustomer, __whenUpdateCustomer) {
     ]
   )
 
-  async function handleUpdate(e) {
-    lockBtn(e.target, 3000)
-    try {
-      notifier.__start('Updating User Info')
+  const [$main, __cleanUpModal] = createModal($form, __sleepFunc)
 
-      customerInfo.name = $nameIp.value
-      customerInfo.address = $addressIp.value
-      customerInfo.phone = $phoneIp.value.split(',')
-      customerInfo.favorite = $favoriteIp.checked
-
-      await updateCustomer(customerInfo)
-      await __whenUpdateCustomer()
-
-      lockNav(`${customerInfo.favorite ? '⭐' : ''}${customerInfo.name}`)
-      notifier.__end('Successfully Updated', 'success')
-    } catch (error) {
-      notifier.__end('Something went wrong', 'error')
-      console.log(error)
-    }
-  }
-
-  const [$main, __cleanUpModal] = createModal($form, () => {
+  function __sleepFunc() {
     _.removeOn('click', $updateBtn, handleUpdate)
     _.removeOn('click', $deleteBtn, handleDelete)
-  })
+  }
 
   function __setUpFunc(customer) {
     $updateBtn.disabled = false
@@ -104,7 +112,7 @@ function createEditCustomerForm(__whenDeleteCustomer, __whenUpdateCustomer) {
     // set up form value
     $nameIp.value = customerInfo.name
     $addressIp.value = customerInfo.address
-    $phoneIp.value = customerInfo.phone.join(', ')
+    $phoneIp.value = customerInfo.phone ? customerInfo.phone.join(', ') : ''
     $favoriteIp.checked = customerInfo.favorite
   }
 

@@ -32,6 +32,8 @@ export default (__whenCreateNewVoucher) => {
 
   function handleNameSearch(e) {
     newUser = true
+    $addressIp.disabled = false
+    $phoneIp.disabled = false
     clearTimeout(searchNameBlocker)
     _.emptyChild($nameList)
     if (!e.target.value) return
@@ -42,11 +44,11 @@ export default (__whenCreateNewVoucher) => {
         'name'
       )
       _.emptyChild($nameList)
-      $nameList.appendChild(createExistedCusName(names))
+      $nameList.appendChild(ih_createExistedCusName(names))
     }, 300)
   }
 
-  function createExistedCusName(users) {
+  function ih_createExistedCusName(users) {
     const fragment = _.createFragment()
     for (const user of users) {
       const nameInfo = _.createElement(
@@ -70,12 +72,14 @@ export default (__whenCreateNewVoucher) => {
   const $nameList = _.createElement('', '', ['existed-customer-list'])
   async function setUserFromList(e) {
     if (!e.target.dataset.cusId) return
-    customerInfo = await getACustomerInfo(parseInt(e.target.dataset.cusId))
+    customerInfo = await getACustomerInfo(Number(e.target.dataset.cusId))
     $nameIp.value = customerInfo.name
     $addressIp.value = customerInfo.address
     $phoneIp.value = customerInfo.phone
     newUser = false
     _.emptyChild($nameList)
+    $addressIp.disabled = true
+    $phoneIp.disabled = true
   }
 
   // address
@@ -147,8 +151,8 @@ export default (__whenCreateNewVoucher) => {
     // type
 
     function handleChange() {
-      const amount = parseInt($amountIp.value.split(/[ -]/)[0]) || 0
-      const rate = parseInt($rateIp.value) || 0
+      const amount = Number($amountIp.value.split(/[ -]/)[0]) || 0
+      const rate = Number($rateIp.value) || 0
       $chargeIp.value = amount * rate
     }
 
@@ -228,17 +232,16 @@ export default (__whenCreateNewVoucher) => {
       notifier.__start('Creating Voucher')
       // if not old user, create user info
       if (newUser) {
-        // store to db
         customerInfo = await saveNewCustomer(
           $nameIp.value,
           $addressIp.value,
-          $phoneIp.value?.split(','),
+          $phoneIp.value.trim().length > 0 ? $phoneIp.value.split(',') : '',
           $dateIp.value
         )
 
         notifier.__processing('New User Created', 'success')
       }
-      const paid = parseInt($paidIp.value)
+      const paid = Number($paidIp.value)
       const date = $dateIp.value
       const note = $noteTArea.value
       const paymentMethod = $methodSelect.value

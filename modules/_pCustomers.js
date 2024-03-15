@@ -1,6 +1,7 @@
 'use strict'
 
 import _ from './dom/index.js'
+import notifier from './notify.js'
 import {
   createCustomerRow,
   createCustomerRows,
@@ -24,7 +25,7 @@ export default () => {
     // if not LI return, else open customer detail
     const id = e.target.id || e.target.parentElement.id
 
-    await __setUpCustomerDetail(parseInt(id.split('-')[1]))
+    await __setUpCustomerDetail(Number(id.split('-')[1]))
     $allCustomersBox.classList.add('d-none')
     $customerDetail.classList.remove('d-none')
   }
@@ -48,7 +49,7 @@ export default () => {
     $customerDetail.classList.add('d-none')
   }
 
-  const $addCustomerBtn = _.createButton('Add', ['btn', 'btn-blue'])
+  const $addCustomerBtn = _.createButton('+ Add', ['btn', 'btn-blue', 'm-1'])
   function handleAddCustomerModal() {
     openModal($addCustomerForm)
     __setUpAddCustomerForm()
@@ -56,7 +57,7 @@ export default () => {
 
   let searchMode = false
   const $searchCustomerBtn = _.createButton('Search', ['btn', 'btn-blue'])
-
+  // to make better ui
   async function handleSearchCustomerModal(e) {
     lockBtn(e.target)
     _.emptyChild($customerList)
@@ -67,17 +68,17 @@ export default () => {
       $sortSelectBox.classList.remove('d-none')
       $addCustomerBtn.classList.remove('d-none')
       // reattach observer
-      ioLoadedCount = 10
+      ioLoadedCount = 20
       ioScrollBack = false
       intersectionObserver.observe($intersectionObserver)
-      appendCustomerRows()
+      ih_appendCustomerRows()
     } else {
       e.target.textContent = 'X'
       $searchCustomerForm.classList.remove('d-none')
       $sortSelectBox.classList.add('d-none')
       $addCustomerBtn.classList.add('d-none')
       e.target.classList.add('btn-red')
-      _.getNodeOn($searchCustomerForm, '#search_customer_ip').focus() // this is not that good
+      _.getNodeOn($searchCustomerForm, '#search_customer_ip').focus()
       // remove observer
       intersectionObserver.unobserve($intersectionObserver)
     }
@@ -92,29 +93,40 @@ export default () => {
   ])
 
   async function handleSortUsers(e) {
+    notifier.__startILLoader()
+    e.target.disabled = true
+
     sortedCustomersData = await sortCustomersBy(e.target.value)
     _.emptyChild($customerList)
-    appendCustomerRows()
-    ioLoadedCount = 10
+    ih_appendCustomerRows()
+    ioLoadedCount = 20
     ioScrollBack = true
+
+    let timerId = setTimeout(() => {
+      e.target.disabled = false
+      clearTimeout(timerId)
+    }, 5000)
+    notifier.__endILLoader()
   }
 
-  const $sortSelectBox = _.createElement(
-    '',
-    '',
-    [],
-    [_.createElement('span', 'Sort By'), $sortUsersSelect]
-  )
+  const $sortSelectBox = _.createElement('', '', '', [
+    _.createElement('span', 'Sort By'),
+    $sortUsersSelect,
+  ])
 
   const $controllers = _.createElement(
     '',
     '',
     ['controllers'],
-    [$addCustomerBtn, $sortSelectBox, $searchCustomerForm, $searchCustomerBtn]
+    [
+      $sortSelectBox,
+      $searchCustomerForm,
+      _.createElement('', '', [], [$addCustomerBtn, $searchCustomerBtn]),
+    ]
   )
 
   // auto loader ---------------------------------- start
-  let ioLoadedCount = 10 // stop when sortedCustomersData.length
+  let ioLoadedCount = 20 // stop when sortedCustomersData.length
   let ioScrollBack = false // this is weird, but works ( instead of entry.target.isIntercepting)
   const $intersectionObserver = _.createElement('', '', [
     'customers-intersection-observer',
@@ -134,8 +146,8 @@ export default () => {
         $intersectionObserver.textContent = 'Loading . . .'
         // loaded += 10
         const timer = setTimeout(async () => {
-          appendCustomerRows(
-            sortedCustomersData.slice(ioLoadedCount, (ioLoadedCount += 10))
+          ih_appendCustomerRows(
+            sortedCustomersData.slice(ioLoadedCount, (ioLoadedCount += 20))
           )
           $intersectionObserver.textContent = ''
           clearTimeout(timer)
@@ -145,9 +157,9 @@ export default () => {
     { threshold: 1 }
   )
   // auto loader ---------------------------------- end
-  async function appendCustomerRows(data) {
+  async function ih_appendCustomerRows(data) {
     $customerList.appendChild(
-      await createCustomerRows(data || sortedCustomersData.slice(0, 10))
+      await createCustomerRows(data || sortedCustomersData.slice(0, 20))
     )
   }
 
@@ -165,20 +177,18 @@ export default () => {
   )
 
   async function __setupFunc() {
-    $searchCustomerForm.classList.add('d-none')
-    $customerDetail.classList.add('d-none')
     await __setUpSearchBox()
     _.on('click', $addCustomerBtn, handleAddCustomerModal)
     _.on('click', $searchCustomerBtn, handleSearchCustomerModal)
     _.on('click', $customerList, handleClickOnCustomerList)
     _.on('change', $sortUsersSelect, handleSortUsers)
     sortedCustomersData = await sortCustomersBy('stars')
-    appendCustomerRows()
+    ih_appendCustomerRows()
     intersectionObserver.observe($intersectionObserver)
   }
 
   async function __cleanupFunc() {
-    sortedCustomersData = []
+    sortedCustomersData = null
     await __cleanUpSearchBox()
     await __cleanUpCustomerDetail()
     await __cleanUpAddCustomerForm()

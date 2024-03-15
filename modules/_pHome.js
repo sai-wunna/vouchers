@@ -34,7 +34,7 @@ export default () => {
       vouchers.currentPage * 20
     )
     if (data.length > 0) {
-      handlePageChange(data)
+      ih_handlePageChange(data)
 
       vouchers.currentPage -= 1
       $nextBtn.disabled = false
@@ -52,7 +52,7 @@ export default () => {
       (vouchers.currentPage + 2) * 20
     )
     if (data.length > 0) {
-      handlePageChange(data, true)
+      ih_handlePageChange(data, true)
 
       vouchers.currentPage += 1
       $prevBtn.disabled = false
@@ -62,17 +62,14 @@ export default () => {
     }
   }
 
-  async function handlePageChange(data = []) {
+  async function ih_handlePageChange(data = []) {
     const formatDate = getFormatDate()
     const title = calculatePageDate(
       data[0]?.createdOn || formatDate,
       data[data.length - 1]?.createdOn || formatDate
     )
     const $pageNode = await createVoucherRows(data)
-    await appendVoucherPage(title, $pageNode)
-  }
 
-  function appendVoucherPage(title, $pageNode) {
     _.emptyChild($voucherInfoTableBody)
     $voucherInfoTableBody.appendChild($pageNode)
     // set titles
@@ -114,6 +111,19 @@ export default () => {
     [$voucherInfoTable]
   )
 
+  function ih_updatePageInfo() {
+    $currentPageInfo.textContent = `Page - ${vouchers.currentPage + 1} / ${
+      Math.ceil(vouchers.data.length / 20) || 1
+    } ( ${$voucherInfoTableBody.childElementCount} )`
+
+    const formatDate = getFormatDate()
+
+    $timePeriodHeader.textContent = calculatePageDate(
+      $voucherInfoTableBody.firstChild?.dataset.createdOn || formatDate,
+      $voucherInfoTableBody.lastChild?.dataset.createdOn || formatDate
+    )
+  }
+
   const [$editVoucherForm, __setUpEditVoucherForm, __cleanUpEditVoucherForm] =
     createEditVoucherForm(__whenDeleteVoucher, __whenUpdateVoucher)
 
@@ -124,14 +134,7 @@ export default () => {
       $voucherInfoTableBody.appendChild(createVoucherRows([vcData]))
     }
 
-    $currentPageInfo.textContent = `Page - ${vouchers.currentPage + 1} / ${
-      Math.ceil(vouchers.data.length / 20) || 1
-    } ( ${$voucherInfoTableBody.childElementCount} )`
-
-    $timePeriodHeader.textContent = calculatePageDate(
-      $voucherInfoTableBody.firstChild.dataset.createdOn,
-      $voucherInfoTableBody.lastChild.dataset.createdOn
-    )
+    ih_updatePageInfo()
   }
 
   function __whenUpdateVoucher(data) {
@@ -142,8 +145,8 @@ export default () => {
     let totalCharge = 0
 
     goodInfo.forEach((info) => {
-      totalAmount += parseInt(info.amount)
-      totalCharge += parseInt(info.charge)
+      totalAmount += Number(info.amount)
+      totalCharge += Number(info.charge)
     })
 
     const $updatedNode = createVoucherRow(
@@ -184,14 +187,7 @@ export default () => {
       )
     }
 
-    $currentPageInfo.textContent = `Page - ${vouchers.currentPage + 1} / ${
-      Math.ceil(vouchers.data.length / 20) || 1
-    } ( ${$voucherInfoTableBody.childElementCount} )`
-
-    $timePeriodHeader.textContent = calculatePageDate(
-      $voucherInfoTableBody.firstChild.dataset.createdOn,
-      $voucherInfoTableBody.lastChild.dataset.createdOn
-    )
+    ih_updatePageInfo()
   }
 
   const [$receiptPaper, __setUpReceiptPaper, __cleanUpReceiptPaper] =
@@ -202,14 +198,10 @@ export default () => {
 
     state.$editingVoucher = e.target.parentElement
 
-    const id = parseInt(e.target.parentElement.dataset.vid)
+    const id = Number(e.target.parentElement.dataset.vid)
     const { customer, receipt } = await getAVoucher(id)
     if (e.target.dataset.edit) {
-      await __setUpEditVoucherForm(
-        receipt,
-        e.target.parentElement,
-        customer.name
-      )
+      await __setUpEditVoucherForm(receipt)
       openModal($editVoucherForm)
     } else {
       await __setUpReceiptPaper(customer, receipt)
@@ -222,7 +214,7 @@ export default () => {
     _.on('click', $nextBtn, handlePageChangeNext)
     _.on('click', $voucherInfoTableBody, handleClickOnInfoWrapper)
     _.on('click', $openFormModalBtn, handleAddFormModal)
-    await handlePageChange(
+    await ih_handlePageChange(
       vouchers.data.slice(
         vouchers.currentPage * 20,
         (vouchers.currentPage + 1) * 20

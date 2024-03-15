@@ -2,44 +2,32 @@
 
 import _ from '../dom/index.js'
 import createConfigChartBox from './_cConfigChart.js'
-import { state, getChartDataByPeriod } from '../state.js'
-import { unlockNav } from '../general/navLocker.js'
+import { state, getChartData } from '../state.js'
+import { unlockNav } from '../helpers/navLocker.js'
 
-function createAnalyzeChart($salesTable) {
+function createAnalyzeChart(__whenQuitSubPage) {
   const { chartConfig } = state
-  let cleanMemoTimer = null
-  const [$configChartBox, __setUpConfigBox, __cleanUpConfigBox] =
-    createConfigChartBox(handleUpdate)
 
-  async function handleUpdate() {
-    const data = await getChartDataByPeriod(chartDataPeriod)
+  const [$configChartBox, __setUpConfigBox, __cleanUpConfigBox] =
+    createConfigChartBox(__whenUpdateConfig)
+
+  async function __whenUpdateConfig() {
+    const data = getChartData(chartDataPeriod)
     myChart.config._config.type = chartConfig.chartType
     myChart.data = data
     myChart.update()
   }
 
   let chartDataPeriod = null
-  const $chart = _.createElement('canvas', '', [], [], 'analyze_chart')
+  const $chart = _.createElement('canvas', '', [], [])
   let myChart = null
 
   async function setUpChart() {
-    const data = await getChartDataByPeriod(chartDataPeriod)
+    const data = await getChartData(chartDataPeriod)
     myChart = new Chart($chart, {
       type: chartConfig.chartType,
       data: data,
-      options: {
-        scales: {
-          y: {
-            beginAtZero: true,
-          },
-          x: {
-            grid: {
-              display: false,
-            },
-          },
-        },
-        responsive: true,
-      },
+      options: { responsive: true },
     })
   }
 
@@ -47,10 +35,8 @@ function createAnalyzeChart($salesTable) {
 
   function handleBack() {
     $main.classList.add('d-none')
-    $salesTable.classList.remove('d-none')
-    cleanMemoTimer = setTimeout(() => {
-      __sleepFunc()
-    }, 10000)
+    __whenQuitSubPage()
+    __sleepFunc()
     unlockNav()
   }
 
@@ -77,34 +63,24 @@ function createAnalyzeChart($salesTable) {
 
   function __sleepFunc() {
     myChart.destroy()
-    myChart = chartDataPeriod = cleanMemoTimer = null
+    myChart = null
     _.on('click', $backToTable, handleBack)
     _.removeOn('resize', window, handleResize) // should not use in production
   }
 
   async function __setUpFunc(period) {
-    clearTimeout(cleanMemoTimer)
-    cleanMemoTimer = null
-
-    if (chartDataPeriod === period) {
-      return
-    }
-    if (myChart) {
-      myChart.destroy()
+    if (!chartDataPeriod) {
+      // only for first time
+      await __setUpConfigBox()
     }
     chartDataPeriod = period
     await setUpChart()
-    await __setUpConfigBox()
     _.on('click', $backToTable, handleBack)
     _.on('resize', window, handleResize)
   }
 
   async function __cleanUpFunc() {
     await __cleanUpConfigBox()
-    if (cleanMemoTimer) {
-      clearTimeout(cleanMemoTimer)
-      __sleepFunc()
-    }
   }
 
   return [$main, __setUpFunc, __cleanUpFunc]

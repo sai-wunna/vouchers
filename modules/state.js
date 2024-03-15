@@ -21,13 +21,16 @@ const state = {
     },
   },
 }
+
+const chartDataSets = {}
+const salesTableData = {}
 const customers = []
 const vouchers = {
   currentPage: 0,
   data: [],
 }
 
-// const tableData = {}
+// const salesTableData = {}
 // const chartBaseSetUp = {}
 // const chartData = {}
 
@@ -51,7 +54,7 @@ function getAVoucher(vid) {
 }
 
 async function updateVoucher(data, totalCharge) {
-  const id = parseInt(data.id)
+  const id = Number(data.id)
   const idx = vouchers.data.findIndex((voucher) => voucher.id === id)
   if (idx === -1) {
     return false
@@ -76,18 +79,20 @@ function updateStarsOfCustomerOnUpdateVoucher(oldData, newData, totalCharge) {
     (cus) => cus.id === oldData.customerId
   )
 
-  if (newData.cancelled !== oldData.cancelled) {
-    const stars = Math.round(totalCharge / 10000)
-    if (newData.cancelled) {
-      customers[customerIdx].stars -= stars
-    } else {
-      customers[customerIdx].stars += stars
-    }
-  }
   const oldTotalCharge = oldData.goodInfo.reduce(
     (total, info) => total + info.charge,
     0
   )
+
+  if (newData.cancelled !== oldData.cancelled) {
+    if (newData.cancelled) {
+      const stars = Math.round(oldTotalCharge / 10000)
+      customers[customerIdx].stars -= stars
+    } else {
+      const stars = Math.round(totalCharge / 10000)
+      customers[customerIdx].stars += stars
+    }
+  }
 
   if (
     !newData.cancelled &&
@@ -100,7 +105,7 @@ function updateStarsOfCustomerOnUpdateVoucher(oldData, newData, totalCharge) {
 }
 
 async function deleteVoucher(vid) {
-  const id = parseInt(vid)
+  const id = Number(vid)
   const idx = vouchers.data.findIndex((voucher) => voucher.id === id)
   if (idx === -1) {
     return false
@@ -217,7 +222,7 @@ function searchCustomer(query, type, limit = 10) {
 
 function deleteCustomer(cusId) {
   try {
-    const id = parseInt(cusId)
+    const id = Number(cusId)
     const vouchersCount = vouchers.data.findIndex(
       (voucher) => voucher.customerId === id
     )
@@ -235,116 +240,351 @@ function deleteCustomer(cusId) {
 
 // ------- handle customers end -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
 
-// ------- handle tableData start -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
-// ------- handle tableData end -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
+// ------- handle salesTableData start -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
+
+function buildSalesTableData() {
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'April',
+    'May',
+    'June',
+    'July',
+    'Aug',
+    'Sept',
+    'Oct',
+    'Nov',
+    'Dec',
+  ]
+
+  // empty, so can calculate
+  for (const key in salesTableData) {
+    delete salesTableData[key]
+  }
+
+  const thisYear = { 'b/r/n': 0, 'b/r/wn': 0, 'w/r/n': 0 }
+  let thisYearTotalAmount = 0
+
+  let prevMonthName = ''
+  const currentMonth = { 'b/r/n': 0, 'b/r/wn': 0, 'w/r/n': 0 } // depends on types
+  let currentMonthTotalAmount = 0
+
+  vouchers.data.toReversed().forEach((voucher, index) => {
+    const month = monthNames[Number(voucher.createdOn.split('-')[1]) - 1]
+
+    if (!salesTableData[month]) {
+      salesTableData[month] = { percentage: '', goodInfo: [], total: 0 }
+
+      if (prevMonthName) {
+        for (const [type, amount] of Object.entries(currentMonth)) {
+          salesTableData[prevMonthName].goodInfo.push({
+            type,
+            amount,
+            percentage: Math.round((amount / currentMonthTotalAmount) * 100),
+          })
+          currentMonth[type] = 0
+        }
+        salesTableData[prevMonthName].total = currentMonthTotalAmount
+        currentMonthTotalAmount = 0
+      }
+      prevMonthName = month
+    }
+
+    voucher.goodInfo.forEach((info) => {
+      const charge = info.charge
+      currentMonth[info.type] += charge
+      currentMonthTotalAmount += charge
+
+      thisYear[info.type] += charge
+      thisYearTotalAmount += charge
+    })
+
+    if (index === vouchers.data.length - 1) {
+      for (const [type, amount] of Object.entries(currentMonth)) {
+        salesTableData[prevMonthName].goodInfo.push({
+          type,
+          amount,
+          percentage: Math.round((amount / currentMonthTotalAmount) * 100),
+        })
+      }
+      salesTableData[prevMonthName].total = currentMonthTotalAmount
+    }
+  })
+
+  for (const key in salesTableData) {
+    salesTableData[key].percentage = `${Math.round(
+      (salesTableData[key].total / thisYearTotalAmount) * 100
+    )}%`
+  }
+
+  salesTableData.thisYear = {
+    percentage: '100%',
+    total: thisYearTotalAmount,
+    goodInfo: [
+      ...Object.entries(thisYear).map(([type, amount]) => {
+        return {
+          type,
+          amount,
+          percentage: Math.round((amount / thisYearTotalAmount) * 100),
+        }
+      }),
+    ],
+  }
+
+  return true
+}
+
+// ------- handle salesTableData end -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
 
 // ------- handle chartData start -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
 
-function calculateChartData() {
-  // calculate data to meet required patterns
-}
-
-function initiateChartData() {
-  // calculate and inset to chartData
-}
-
-function getChartDataByPeriod(period) {
-  const data = chartData[period]
-  return {
-    labels: data.labels,
-    // it depends on categories
-    datasets: [
-      {
-        data: data.datasets[0].data,
-        ...chartBaseSetUp['b/r/n'],
-        ...chartConfig.datasetsConf,
-      },
-      {
-        data: data.datasets[1].data,
-        ...chartBaseSetUp['b/r/wn'],
-        ...chartConfig.datasetsConf,
-      },
-      {
-        data: data.datasets[2].data,
-        ...chartBaseSetUp['w/r/n'],
-        ...chartConfig.datasetsConf,
-      },
-    ],
+function getChartData(period) {
+  const data = chartDataSets[period]
+  if (!data) {
+    return false
   }
+  data.datasets.forEach((set, index) => {
+    data.datasets[index] = { ...set, ...state.chartConfig.datasetsConf }
+  })
+  return data
 }
-// depends on category -- under construction
-// function calculateCustomerChartData(cusId) {
-//   const id = parseInt(cusId)
-//   const vouchers = vouchers.data.filter((voucher) => voucher.customerId === id)
-//   const labels = []
-//   const datasets = [{ data: [] }, { data: [] }, { data: [] }]
-//   vouchers.forEach((voucher) => {
-//     const month = getMonthName(voucher.createdOn)
-//     voucher.goodInfo.forEach((info) => {})
-//   })
-//   return { labels, datasets }
-// }
 
-// async function getCustomerChart(cusId) {
-//   const data = await calculateCustomerChartData()
-//   return {
-//     labels: data.labels,
-//     // it depends on categories
-//     datasets: [
-//       {
-//         data: data.datasets[0].data,
-//         ...chartBaseSetUp['b/r/n'],
-//         ...chartConfig.datasetsConf,
-//       },
-//       {
-//         data: data.datasets[1].data,
-//         ...chartBaseSetUp['b/r/wn'],
-//         ...chartConfig.datasetsConf,
-//       },
-//       {
-//         data: data.datasets[2].data,
-//         ...chartBaseSetUp['w/r/n'],
-//         ...chartConfig.datasetsConf,
-//       },
-//     ],
-//   }
-// }
+const baseSetupForChartDataSet = {
+  'b/r/n': {
+    label: 'Black Raw ( with shell )',
+    borderColor: 'rgba(246, 255, 0, 0.6)',
+    backgroundColor: 'rgba(246, 255, 0, 0.6)',
+  },
+  'b/r/wn': {
+    label: 'Black Raw ( without shell )',
+    borderColor: 'rgba(0, 60, 255, 0.6)',
+    backgroundColor: 'rgba(0, 60, 255, 0.6)',
+  },
+  'w/r/n': {
+    label: 'White Raw ( with shell )',
+    borderColor: 'rgba(255, 0, 0, 0.6)',
+    backgroundColor: 'rgba(255, 0, 0, 0.6)',
+  },
+  // more to add --- depends on good types
+}
+
+// monthly data chart start -------------------------------------------------
+
+function getDaysArray(dateStr) {
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1
+
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+
+  return daysArray
+}
+
+function buildMonthlyChartData() {
+  const isValidData = isValidToBuildMonthlyChart(vouchers.data)
+
+  if (!isValidData) {
+    console.log('Invalid Data to Build Data')
+    return {}
+  }
+
+  const possibleDatasets = convertToMonthlyDataSets(vouchers.data.toReversed())
+
+  for (const [k, v] of Object.entries(possibleDatasets)) {
+    chartDataSets[k] = buildMonthlyChartDataSets(v)
+  }
+
+  return true
+}
+
+function buildMonthlyChartDataSets(data) {
+  const labels = getDaysArray(data[0].createdOn)
+  const altDatasets = {
+    'b/r/n': Array.from({ length: labels.length }, () => 0),
+    'b/r/wn': Array.from({ length: labels.length }, () => 0),
+    'w/r/n': Array.from({ length: labels.length }, () => 0),
+  } // depends on good types
+
+  data.forEach((voucher) => {
+    if (voucher.cancelled) {
+      return
+    }
+    const currentDay = Number(voucher.createdOn.split('-')[2]) - 1
+    voucher.goodInfo.forEach((info) => {
+      if (info.type === 'b/r/n') {
+        if (altDatasets['b/r/n'][currentDay]) {
+          altDatasets['b/r/n'][currentDay] += info.charge
+        } else {
+          altDatasets['b/r/n'][currentDay] = info.charge
+        }
+      } else if (info.type === 'b/r/wn') {
+        if (altDatasets['b/r/wn'][currentDay]) {
+          altDatasets['b/r/wn'][currentDay] += info.charge
+        } else {
+          altDatasets['b/r/wn'][currentDay] = info.charge
+        }
+      } else {
+        if (altDatasets['w/r/n'][currentDay]) {
+          altDatasets['w/r/n'][currentDay] += info.charge
+        } else {
+          altDatasets['w/r/n'][currentDay] = info.charge
+        }
+      }
+    })
+  })
+
+  const chartData = { labels, datasets: [] }
+
+  for (const [k, v] of Object.entries(altDatasets)) {
+    chartData.datasets.push({
+      data: [...v],
+      label: baseSetupForChartDataSet[k].label,
+      backgroundColor: baseSetupForChartDataSet[k].backgroundColor,
+      borderColor: baseSetupForChartDataSet[k].borderColor,
+      // ...state.chartConfig.datasetsConf,
+    })
+  }
+  return chartData
+}
+
+function convertToMonthlyDataSets(data) {
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'April',
+    'May',
+    'June',
+    'July',
+    'Aug',
+    'Sept',
+    'Oct',
+    'Nov',
+    'Dec',
+  ]
+  const datasets = {}
+
+  let currentMonth = ''
+
+  for (const voucher of data) {
+    if (voucher.cancelled) {
+      continue
+    }
+    const month = monthNames[Number(voucher.createdOn.split('-')[1]) - 1]
+    if (month === currentMonth) {
+      datasets[currentMonth].push(voucher)
+    } else {
+      currentMonth = month
+      datasets[currentMonth] = [voucher]
+    }
+  }
+
+  return datasets
+}
+
+function isValidToBuildMonthlyChart(data) {
+  const [y1, m1] = data[0].createdOn.split('-').map((date) => Number(date))
+  const [y2, m2] = data[data.length - 1].createdOn
+    .split('-')
+    .map((date) => Number(date))
+
+  if (y1 === y2 && m1 === m2) {
+    return false
+  }
+  return true
+}
+// monthly data chart done -------------------------------------------------
+
+// build customer and total data chart start -------------------------------
+
+function buildCustomerChartData(vouchers) {
+  const chartData = buildTotalChartData(vouchers)
+  chartData.datasets.forEach((set, index) => {
+    chartData.datasets[index] = { ...set, ...state.chartConfig.datasetsConf }
+  })
+  return chartData
+}
+
+function buildTotalChartData(vouchers) {
+  const labels = []
+  const chartData = { labels, datasets: [] }
+
+  if (vouchers.length < 12) {
+    return chartData
+  }
+
+  const possibleColumnsDataSet = buildTotalChartDataSet(vouchers.toReversed())
+  const altDatasets = { 'b/r/n': [], 'b/r/wn': [], 'w/r/n': [] } // depends on good types
+
+  possibleColumnsDataSet.forEach((dataSet, index) => {
+    const labelIdx = Math.round(dataSet.length / 2)
+    const label =
+      dataSet[labelIdx]?.createdOn || dataSet[labelIdx - 1].createdOn
+    labels.push(label)
+    dataSet.forEach((voucher) => {
+      if (voucher.cancelled) {
+        return
+      }
+      voucher.goodInfo.forEach((info) => {
+        if (info.type === 'b/r/n') {
+          if (altDatasets['b/r/n'][index]) {
+            altDatasets['b/r/n'][index] += info.charge
+          } else {
+            altDatasets['b/r/n'][index] = info.charge
+          }
+        } else if (info.type === 'b/r/wn') {
+          if (altDatasets['b/r/wn'][index]) {
+            altDatasets['b/r/wn'][index] += info.charge
+          } else {
+            altDatasets['b/r/wn'][index] = info.charge
+          }
+        } else {
+          if (altDatasets['w/r/n'][index]) {
+            altDatasets['w/r/n'][index] += info.charge
+          } else {
+            altDatasets['w/r/n'][index] = info.charge
+          }
+        }
+      })
+    })
+  })
+
+  for (const [k, v] of Object.entries(altDatasets)) {
+    chartData.datasets.push({
+      label: baseSetupForChartDataSet[k].label,
+      data: [...v],
+      backgroundColor: baseSetupForChartDataSet[k].backgroundColor,
+      borderColor: baseSetupForChartDataSet[k].borderColor,
+    })
+  }
+
+  return chartData
+}
+
+function buildTotalChartDataSet(data) {
+  const possibleColumnsSet = []
+  const possibleCounts = Math.round(data.length / 12)
+
+  for (let i = 0; i < data.length; i += possibleCounts) {
+    possibleColumnsSet.push(data.slice(i, i + possibleCounts))
+  }
+  return possibleColumnsSet
+}
+
+function buildForThisYearChartData() {
+  chartDataSets.thisYear = buildTotalChartData(vouchers.data)
+}
+
+// build customer and total data chart end ---------------------------------
 
 // ------- handle chartData end -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
 
-// _____________ initialize __________________________
-async function initiateState({
-  vouchers,
-  customers: customerData,
-  chartBaseSetUp: chartBaseSetUpData,
-  chartConfig: chartConfigData,
-}) {
-  try {
-    vouchers.data.splice(0, vouchers.data.length, ...vouchers)
-
-    customers.splice(0, customers.length, ...customerData)
-
-    for (const [k, v] of Object.entries(chartBaseSetUpData)) {
-      chartBaseSetUp[k] = v
-    }
-
-    for (const [k, v] of Object.entries(chartConfigData)) {
-      chartConfig[k] = v
-    }
-    return true
-  } catch (error) {
-    console.log(error)
-    return false
-  }
-}
-
 export {
   state,
-  // ---------
   customers,
   vouchers,
-  // --------
-  initiateChartData,
   // ----- voucher
   getAVoucher,
   saveNewVoucher,
@@ -358,5 +598,13 @@ export {
   deleteCustomer,
   saveNewCustomer,
   updateCustomer,
-  getChartDataByPeriod,
+  // ------- table data
+  salesTableData,
+  buildSalesTableData,
+  // ------ chart data
+  getChartData,
+  buildCustomerChartData,
+  buildTotalChartData,
+  buildForThisYearChartData,
+  buildMonthlyChartData,
 }

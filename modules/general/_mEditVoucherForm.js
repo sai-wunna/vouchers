@@ -52,7 +52,7 @@ export default function createEditVoucherForm(
     ]
   )
 
-  const $goodInfoBoxWrapper = _.createElement('', '', ['good-info-box-wrapper']) // goods info box
+  const $goodInfoBoxWrapper = _.createElement('', '', ['good-info-box-wrapper'])
   let boxNumber = 0
   const boxEvtCleaners = []
 
@@ -85,8 +85,8 @@ export default function createEditVoucherForm(
     // type
 
     function handleChange() {
-      const amount = parseInt($amountIp.value.split(/[ -]/)[0])
-      const rate = parseInt($rateIp.value) || 0
+      const amount = Number($amountIp.value.split(/[ -]/)[0])
+      const rate = Number($rateIp.value) || 0
       $chargeIp.value = amount * rate
     }
 
@@ -178,6 +178,9 @@ export default function createEditVoucherForm(
 
   const $updateBtn = _.createButton('Update', ['btn', 'btn-blue'])
   async function handleUpdate(e) {
+    if (boxNumber === 0) {
+      return notifier.on('invalidVoucherInfo', 'warning')
+    }
     lockBtn(e.target)
     try {
       notifier.__start('updatingVoucher', 'info')
@@ -185,7 +188,7 @@ export default function createEditVoucherForm(
       const paymentMethod = $methodSelect.value
       const note = $noteTArea.value
       const updatedOn = getFormatDate()
-      const paid = parseInt($paidIp.value)
+      const paid = Number($paidIp.value)
       const cancelled = $cancelCheckBox.checked
       const [totalAmount, totalCharge, goodInfo] = await convertToGoodInfoData(
         _.getAllNodes('.good-type-select'),
@@ -193,6 +196,10 @@ export default function createEditVoucherForm(
         _.getAllNodes('.good-rate-ip'),
         _.getAllNodes('.good-charge-ip')
       )
+      if (totalCharge === 0 || totalAmount === 0) {
+        notifier.__end('invalidVoucherInfo', 'warning')
+        return
+      }
       const data = {
         id,
         createdOn,
@@ -265,10 +272,10 @@ export default function createEditVoucherForm(
     _.emptyChild($goodInfoBoxWrapper)
   }
 
-  function __setUpFunc(data, name) {
+  function __setUpFunc(data) {
     voucherInfo = data
     //setup header
-    const { id, goodInfo, paid, createdOn, note, cancelled } = data
+    const { id, goodInfo, paid, createdOn, note, cancelled, name } = data
     $voucherId.textContent = `vid-${id}`
     $customerName.textContent = name
     $createdOn.textContent = createdOn
@@ -282,7 +289,7 @@ export default function createEditVoucherForm(
     $cancelCheckBox.checked = cancelled
     $paidIp.value = paid
     $noteTArea.value = note
-    // add listeners
+
     _.on('click', $deleteBtn, handleDelete)
     _.on('click', $addGoodInfoBoxBtn, handleAddBox)
     _.on('click', $removeGoodInfoBoxBtn, handleRemoveBox)

@@ -3,7 +3,7 @@
 import _ from '../dom/index.js'
 import { state } from '../state.js'
 
-function configChartBox(handleUpdate) {
+function configChartBox(__whenUpdate) {
   const { chartConfig } = state
   const $toggleConfigBoxBtn = _.createButton('Customize', ['btn', 'btn-blue'])
 
@@ -34,7 +34,7 @@ function configChartBox(handleUpdate) {
     if (e.target.checked) {
       chartConfig.datasetsConf.fill = 'origin'
     } else {
-      delete chartConfig.datasetsConf.fill
+      chartConfig.datasetsConf.fill = false
     }
   }
 
@@ -50,7 +50,7 @@ function configChartBox(handleUpdate) {
     { min: 0, max: 10, value: 3 }
   )
   function handleBorderWidthChange(e) {
-    const value = parseInt(e.target.value)
+    const value = Number(e.target.value)
     if (value > 10 || value < 0) return
     chartConfig.datasetsConf.borderWidth = value
   }
@@ -65,7 +65,7 @@ function configChartBox(handleUpdate) {
     { min: 0, max: 4, value: 3 }
   )
   function handleTensionChange(e) {
-    const value = parseInt(e.target.value)
+    const value = Number(e.target.value)
     if (value > 4 || value < 0) return
     chartConfig.datasetsConf.tension = value / 10
   }
@@ -73,6 +73,7 @@ function configChartBox(handleUpdate) {
   const $chartPointSizeLb = _.createLabel('Point-size', 'chart_conf_point', [
     'form-control',
   ])
+
   const $chartPointSizeIp = _.createInput(
     'number',
     ['form-control'],
@@ -80,12 +81,12 @@ function configChartBox(handleUpdate) {
     { max: 10, min: 0, value: 3 }
   )
   function handlePointSizeChange(e) {
-    const value = parseInt(e.target.value)
+    const value = Number(e.target.value)
     if (value > 10 || value < 0) return
     chartConfig.datasetsConf.pointRadius = value
   }
 
-  const $updateBtn = _.createButton('Save', [
+  const $updateBtn = _.createButton('Apply', [
     'btn',
     'btn-blue',
     'float-end',
@@ -148,7 +149,7 @@ function configChartBox(handleUpdate) {
     _.on('change', $chartBorderWidthIp, handleBorderWidthChange)
     _.on('change', $chartTensionIp, handleTensionChange)
     _.on('change', $chartPointSizeIp, handlePointSizeChange)
-    _.on('click', $updateBtn, handleUpdate)
+    _.on('click', $updateBtn, __whenUpdate)
   }
 
   function __cleanUpFunc() {
@@ -157,7 +158,7 @@ function configChartBox(handleUpdate) {
     _.on('change', $chartBorderWidthIp, handleBorderWidthChange)
     _.on('change', $chartTensionIp, handleTensionChange)
     _.on('change', $chartPointSizeIp, handlePointSizeChange)
-    _.on('click', $updateBtn, handleUpdate)
+    _.on('click', $updateBtn, __whenUpdate)
   }
 
   return [$main, __setUpFunc, __cleanUpFunc]

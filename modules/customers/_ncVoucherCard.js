@@ -41,8 +41,10 @@ function createVoucherCard(data) {
       [_.createTable(['receipt-table'], tHeader, { rows })]
     ),
     _.createHeading('h6', paymentMethod, ['float-start']),
-    _.createHeading('h6', `Total ${totalCharge}ks`, ['text-end']),
-    _.createHeading('h6', `Paid ${paid}ks`, ['text-end']),
+    _.createHeading('h6', `Total ${totalCharge.toLocaleString()}ks`, [
+      'text-end',
+    ]),
+    _.createHeading('h6', `Paid ${paid.toLocaleString()}ks`, ['text-end']),
     _.createElement(
       '',
       '',

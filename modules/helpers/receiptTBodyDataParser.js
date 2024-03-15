@@ -14,7 +14,7 @@ function convertToTBDataNTotalAmount(data = []) {
     const rowData = []
     for (const [k, v] of Object.entries(row)) {
       if (k === 'charge') {
-        totalCharge += parseInt(v)
+        totalCharge += Number(v)
       }
       rowData.push({ text: isNaN(v) ? v : v.toLocaleString() })
     }

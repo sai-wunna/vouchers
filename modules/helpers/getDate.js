@@ -15,7 +15,7 @@ const monthNames = [
 ]
 
 function getMonthName(dateStr) {
-  const idx = parseInt(dateStr.split('-')[1])
+  const idx = Number(dateStr.split('-')[1])
   return monthNames[idx]
 }
 // return newer date first

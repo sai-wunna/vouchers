@@ -22,16 +22,20 @@ class Notify {
     deletedCustomer: 'This Customer has been removed',
     maintenance: 'Under Construction',
     versionConflict: 'File version are not same !!!',
+    outOfDataForChart: 'No enough data to build chart',
+    chartForPcOnly: 'Only Work In large Screen',
   }
-  #countLimit
+  #countLimit = 3
   #currentCount = 0
   #$progressLoader
   #progressTimer = null
   #progressAlertType = null
+  #$inlineLoader
+  #inlineTimer = null
 
-  constructor(doc, countLimit = 3) {
-    this.#countLimit = countLimit
-    this.#$progressLoader = _.createElement('div', '', ['progress-alert'])
+  constructor() {
+    this.#$progressLoader = _.createElement('', '', ['progress-alert'])
+    this.#$inlineLoader = _.createElement('', '', ['inline-loader'])
   }
 
   on(msg = 'invalid', type = 'success', period = 3000) {
@@ -103,6 +107,22 @@ class Notify {
       this.#$progressLoader.classList.remove(`alert-${type}`)
       clearTimeout(this.#progressTimer)
       this.#progressTimer = null
+    }, 2000)
+  }
+
+  __startILLoader() {
+    if (this.#inlineTimer) return
+
+    _.appendChild(this.#$inlineLoader)
+  }
+
+  __endILLoader(type = 'success') {
+    this.#$inlineLoader.classList.add(`inline-loader-${type}`)
+    this.#inlineTimer = setTimeout(() => {
+      this.#$inlineLoader.classList.add(`inline-loader-${type}`)
+      this.#$inlineLoader.remove()
+      clearTimeout(this.#inlineTimer)
+      this.#inlineTimer = null
     }, 2000)
   }
 }

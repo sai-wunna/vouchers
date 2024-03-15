@@ -6,7 +6,7 @@ import { createModal } from '../helpers/createModal.js'
 import notifier from '../notify.js'
 import { getFormatDate } from '../helpers/getDate.js'
 
-export default () => {
+export default (__whenCreateNewCustomer) => {
   const $createBtn = _.createButton('Create', [
     'btn',
     'btn-blue',
@@ -40,21 +40,25 @@ export default () => {
       notifier.__start('Creating user', 'info')
       const name = $nameIp.value
       const address = $addressIp.value
-      const phone = $phoneIp.value.split(',')
+      const phone =
+        $phoneIp.value.trim().length > 0 ? $phoneIp.value.split(',') : ''
       const company = $companyIp.value
       const date = getFormatDate()
       await saveNewCustomer(name, address, phone, date, company)
       await __whenCreateNewCustomer()
       notifier.__end('Successfully Created', 'success')
     } catch (error) {
+      console.log(error)
       notifier.__end('Something went wrong', 'error')
     }
   }
 
-  const [$main, __cleanUpModal] = createModal($form, () => {
+  const [$main, __cleanUpModal] = createModal($form, __sleepFunc)
+
+  function __sleepFunc() {
     _.removeOn('click', $createBtn, handleClick)
-    $nameIp.value = $addressIp.value = $phoneIp.value = ''
-  })
+    $nameIp.value = $addressIp.value = $phoneIp.value = null
+  }
 
   function __setUpFunc() {
     $nameIp.focus()

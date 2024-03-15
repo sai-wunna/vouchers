@@ -13,7 +13,7 @@ function createVoucherRow(
   cancelled
 ) {
   const classList = []
-  if (parseInt(totalCharge) > parseInt(paid)) {
+  if (Number(totalCharge) > Number(paid)) {
     classList.push('ongoing-voucher-info')
   }
 
@@ -52,7 +52,7 @@ function createVoucherRows(data) {
     let totalCharge = 0
     for (const singleGoodInfo of goodInfo) {
       totalAmount += parseInt(singleGoodInfo.amount)
-      totalCharge += parseInt(singleGoodInfo.charge)
+      totalCharge += Number(singleGoodInfo.charge)
     }
 
     const $tr = createVoucherRow(

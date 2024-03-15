@@ -1,7 +1,15 @@
 'use strict'
 
 import _ from './dom/index.js'
-import { customers, state, vouchers } from './state.js'
+import {
+  customers,
+  state,
+  vouchers,
+  buildSalesTableData,
+  buildMonthlyChartData,
+  buildTotalChartData,
+  buildForThisYearChartData,
+} from './state.js'
 import notifier from './notify.js'
 import downloadBox from './fileManager/_cDownloadBox.js'
 import lockBtn from './helpers/lockBtn.js'
@@ -89,7 +97,7 @@ export default () => {
     'btn-blue',
     'float-end',
   ])
-  function handleConfirm(e) {
+  async function handleConfirm(e) {
     if (!fileData) return
     lockBtn(e.target, 5000)
     notifier.__start('Building Data', 'info')
@@ -100,6 +108,11 @@ export default () => {
 
     vouchers.data.splice(0, vouchers.data.length, ...fileData.vouchers)
     customers.splice(0, customers.length, ...fileData.customers)
+
+    await buildForThisYearChartData()
+    await buildSalesTableData()
+    await buildMonthlyChartData()
+
     vouchers.currentPage = 0
     notifier.__end('Ready', 'info')
   }

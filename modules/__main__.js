@@ -40,16 +40,15 @@ import $loadingPage from './general/_ncLoadingPage.js'
   })
 
   _.on('click', $navigateToAnalyze, async (e) => {
-    notifier.on('maintenance', 'warning')
-    // if (navSpamBlocker) return
-    // if (currentRoute === 'analyze') return
+    if (navSpamBlocker) return
+    if (currentRoute === 'analyze') return
 
-    // currentRoute = 'analyze'
-    // $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
+    currentRoute = 'analyze'
+    $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
-    // setActiveNav(e.target)
-    // switchPage((await import('./_pAnalyze.js')).default)
-    // updateTitle('Analyze')
+    setActiveNav(e.target)
+    switchPage((await import('./_pAnalyze.js')).default)
+    updateTitle('Analyze')
   })
 
   _.on('click', $navigateToFileManager, async (e) => {
@@ -95,11 +94,12 @@ import $loadingPage from './general/_ncLoadingPage.js'
     document.title = page
   }
 
-  _.on('beforeunload', window, (e) => {
-    e.preventDefault()
-    e.returnValue = ''
-    return ''
-  })
+  // _.on('beforeunload', window, (e) => {
+  //   e.preventDefault()
+  //   e.returnValue = ''
+  //   return ''
+  // })
+
   ;(async () => {
     $pageWrapper.appendChild(_.createNode('br'))
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
