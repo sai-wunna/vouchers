@@ -2,11 +2,14 @@
 
 import _ from '../dom/index.js'
 import createConfigChartBox from './_cConfigChart.js'
-import { state, getChartData } from '../state.js'
-import { unlockNav } from '../helpers/navLocker.js'
+import { state, getChartData, salesTableData } from '../state.js'
+import { lockNav, unlockNav } from '../helpers/navLocker.js'
 
-function createAnalyzeChart(__whenQuitSubPage) {
+export default (__whenQuitSubPage) => {
   const { chartConfig } = state
+  let chartDataPeriod = null
+  let currentChartIdx = null
+  const availableCharts = []
 
   const [$configChartBox, __setUpConfigBox, __cleanUpConfigBox] =
     createConfigChartBox(__whenUpdateConfig)
@@ -18,7 +21,6 @@ function createAnalyzeChart(__whenQuitSubPage) {
     myChart.update()
   }
 
-  let chartDataPeriod = null
   const $chart = _.createElement('canvas', '', [], [])
   let myChart = null
 
@@ -31,7 +33,7 @@ function createAnalyzeChart(__whenQuitSubPage) {
     })
   }
 
-  const $backToTable = _.createButton('X', ['btn', 'btn-ghost'])
+  const $backToTable = _.createButton('Back', ['btn', 'btn-ghost'])
 
   function handleBack() {
     $main.classList.add('d-none')
@@ -40,11 +42,57 @@ function createAnalyzeChart(__whenQuitSubPage) {
     unlockNav()
   }
 
+  const $toPrevSalePeriod = _.createButton('', ['btn', 'btn-ghost', 'mx-1'])
+  function handlePrevChart() {
+    chartDataPeriod = availableCharts[(currentChartIdx -= 1)]
+    __whenUpdateConfig()
+    ih_updateNavLocker()
+    ih_updatePrevNextBtn()
+  }
+
+  const $toNextSalePeriod = _.createButton('', ['btn', 'btn-ghost', 'mx-1'])
+  function handleNextChart() {
+    chartDataPeriod = availableCharts[(currentChartIdx += 1)]
+    __whenUpdateConfig()
+    ih_updateNavLocker()
+    ih_updatePrevNextBtn()
+  }
+
+  function ih_updateNavLocker() {
+    const percentage = salesTableData[chartDataPeriod].percentage
+    lockNav(
+      `In ${chartDataPeriod} ${percentage} ${
+        chartDataPeriod === 'thisYear' ? '' : 'of total Sales'
+      }`
+    )
+  }
+
+  function ih_updatePrevNextBtn() {
+    if (availableCharts[currentChartIdx - 1]) {
+      $toPrevSalePeriod.textContent = availableCharts[currentChartIdx - 1]
+      $toPrevSalePeriod.disabled = false
+    } else {
+      $toPrevSalePeriod.textContent = '-----'
+      $toPrevSalePeriod.disabled = true
+    }
+    if (availableCharts[currentChartIdx + 1]) {
+      $toNextSalePeriod.textContent = availableCharts[currentChartIdx + 1]
+      $toNextSalePeriod.disabled = false
+    } else {
+      $toNextSalePeriod.textContent = '-----'
+      $toNextSalePeriod.disabled = true
+    }
+  }
+
   const $controllers = _.createElement(
     '',
     '',
     ['controllers'],
-    [$backToTable, $configChartBox]
+    [
+      $backToTable,
+      _.createElement('', '', '', [$toPrevSalePeriod, $toNextSalePeriod]),
+      $configChartBox,
+    ]
   )
 
   function handleResize(e) {
@@ -64,7 +112,9 @@ function createAnalyzeChart(__whenQuitSubPage) {
   function __sleepFunc() {
     myChart.destroy()
     myChart = null
-    _.on('click', $backToTable, handleBack)
+    _.removeOn('click', $backToTable, handleBack)
+    _.removeOn('click', $toPrevSalePeriod, handlePrevChart)
+    _.removeOn('click', $toNextSalePeriod, handleNextChart)
     _.removeOn('resize', window, handleResize) // should not use in production
   }
 
@@ -72,10 +122,20 @@ function createAnalyzeChart(__whenQuitSubPage) {
     if (!chartDataPeriod) {
       // only for first time
       await __setUpConfigBox()
+      for (const key in salesTableData) {
+        availableCharts.push(key)
+      }
     }
+    // set up prev-next data
     chartDataPeriod = period
+    currentChartIdx = availableCharts.findIndex(
+      (period) => period === chartDataPeriod
+    )
+    ih_updatePrevNextBtn()
     await setUpChart()
     _.on('click', $backToTable, handleBack)
+    _.on('click', $toPrevSalePeriod, handlePrevChart)
+    _.on('click', $toNextSalePeriod, handleNextChart)
     _.on('resize', window, handleResize)
   }
 
@@ -85,5 +145,3 @@ function createAnalyzeChart(__whenQuitSubPage) {
 
   return [$main, __setUpFunc, __cleanUpFunc]
 }
-
-export default createAnalyzeChart

@@ -1,9 +1,10 @@
 'use strict'
+
 import _ from './dom/index.js'
 import notifier from './notify.js'
 import $loadingPage from './general/_ncLoadingPage.js'
 
-// ---
+// --- ignite
 ;(() => {
   const $navigateToCustomers = _.getNodeById('toCustomers')
   const $navigateToAnalyze = _.getNodeById('toAnalyze')

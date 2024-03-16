@@ -95,7 +95,8 @@ export default () => {
     lockNav(
       `In ${period} ${percentage} ${
         period === 'thisYear' ? '' : 'of total Sales'
-      }`
+      }`,
+      true
     )
     $salesTable.classList.add('d-none')
     $chart.classList.remove('d-none')

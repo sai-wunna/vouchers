@@ -200,9 +200,10 @@ function createCustomerDetail(__whenQuitFunc) {
     $editCustomerBtn.disabled = false
 
     if (customerInfo && customerInfo.id === id) {
-      lockNav(`${customerInfo.favorite ? '✨ ' : ''}${customerInfo.name}`)
+      lockNav(`${customerInfo.favorite ? '✨ ' : ''}${customerInfo.name}`, true)
       return
     }
+
     if (isChartSetup) {
       await __cleanUpChart()
       $chart.remove()
@@ -222,7 +223,7 @@ function createCustomerDetail(__whenQuitFunc) {
     await countStarsAnimate($starCounter, customerInfo.stars)
 
     // setUpChart
-    if (customerVouchers.length > 11) {
+    if (customerVouchers.length > 11 && window.innerWidth > 800) {
       await __setUpChart(customerVouchers)
       $chartContainer.appendChild($chart)
       isChartSetup = true
@@ -233,7 +234,7 @@ function createCustomerDetail(__whenQuitFunc) {
     ioLoadedCount = 4
     intersectionObserver.observe($intersectionObserver)
 
-    lockNav(`${customerInfo.favorite ? '✨ ' : ''}${customerInfo.name}`)
+    lockNav(`${customerInfo.favorite ? '✨ ' : ''}${customerInfo.name}`, true)
 
     _.on('click', $editCustomerBtn, handleEditCustomerClick)
     _.on('click', $backToCustomersBtn, handleBackToCustomerPage)
