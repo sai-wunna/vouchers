@@ -95,12 +95,11 @@ import $loadingPage from './general/_ncLoadingPage.js'
     document.title = page
   }
 
-  // _.on('beforeunload', window, (e) => {
-  //   e.preventDefault()
-  //   e.returnValue = ''
-  //   return ''
-  // })
-
+  _.on('beforeunload', window, (e) => {
+    e.preventDefault()
+    e.returnValue = ''
+    return ''
+  })
   ;(async () => {
     $pageWrapper.appendChild(_.createNode('br'))
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)

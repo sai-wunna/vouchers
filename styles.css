@@ -322,17 +322,17 @@
 }
 
 .btn-blue {
-  background-color: rgb(76, 121, 255);
+  background-color: rgb(64, 95, 189);
   color: white;
 }
 
 .btn-orange {
-  background-color: rgb(255, 207, 76);
+  background-color: rgb(206, 171, 74);
   color: black;
 }
 
 .btn-red {
-  background-color: rgb(255, 74, 74);
+  background-color: rgb(215, 70, 70);
   color: white;
 }
 
@@ -579,7 +579,6 @@ h1 {
 .voucher-table {
   width: 100%;
   border-collapse: collapse;
-  box-shadow: 0 2px 5px 2px rgba(0, 0, 0, 0.358);
   text-align: center;
 }
 
@@ -981,19 +980,19 @@ h1 {
   margin: 0 5px 0 0;
 }
 
-.bar-amount:nth-child(2) > .bar-amt-indicator {
+.bar-amount:nth-child(3) > .bar-amt-indicator {
   background-color: rgb(112, 97, 188);
 }
 
-.bar-amount:nth-child(3) > .bar-amt-indicator {
+.bar-amount:nth-child(4) > .bar-amt-indicator {
   background-color: rgb(206, 86, 86);
 }
 
-.bar-amount:nth-child(4) > .bar-amt-indicator {
+.bar-amount:nth-child(5) > .bar-amt-indicator {
   background-color: rgb(153, 154, 62);
 }
 
-.bar-amount:nth-child(5) > .bar-amt-indicator {
+.bar-amount:nth-child(6) > .bar-amt-indicator {
   background-color: rgb(83, 178, 83);
 }
 

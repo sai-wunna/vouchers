@@ -18,19 +18,24 @@ export default function createEditVoucherForm(
   const $deleteBtn = _.createButton('Delete', ['btn-corner-left', 'btn-red'])
   async function handleDelete(e) {
     lockBtn(e.target, 3000)
-    notifier.__start('Deleting . . . ')
+    try {
+      notifier.__start('Deleting . . . ')
 
-    const processCompleted = await deleteVoucher(voucherInfo.id)
+      const processCompleted = await deleteVoucher(voucherInfo.id)
 
-    if (!processCompleted) {
-      notifier.__end('No Data Found', 'error')
-      return
+      if (!processCompleted) {
+        notifier.__end('No Data Found', 'error')
+        return
+      }
+      state.$editingVoucher.remove()
+      state.$editingVoucher = null
+      await __whenDeleteVoucher()
+
+      notifier.__end('Successfully Deleted', 'success')
+    } catch (error) {
+      notifier.__end('Something Went Wrong', 'error')
+      console.log(error)
     }
-    state.$editingVoucher.remove()
-    state.$editingVoucher = null
-    await __whenDeleteVoucher()
-
-    notifier.__end('Successfully Deleted', 'success')
   }
 
   const $voucherId = _.createHeading('h6')
@@ -53,16 +58,20 @@ export default function createEditVoucherForm(
   )
 
   const $goodInfoBoxWrapper = _.createElement('', '', ['good-info-box-wrapper'])
+
   let boxNumber = 0
   const boxEvtCleaners = []
+  const addedGoodTypes = { 'b/r/n': false, 'b/r/wn': false, 'w/r/n': false } // it depends mustupdate mustupdate mustupdate
 
-  const $addGoodInfoBoxBtn = _.createButton('Add Sheet', [
-    'btn',
-    'btn-blue',
-    'mx-1',
-  ])
+  const $addGoodInfoBoxBtn = _.createButton('Add', ['btn', 'btn-blue', 'mx-1'])
   function handleAddBox() {
-    $goodInfoBoxWrapper.appendChild(createGoodInfoBox())
+    const type = $typeSelect.value
+    if (addedGoodTypes[type]) {
+      notifier.on('sameGoodTypeAdded', 'warning')
+      return
+    }
+    addedGoodTypes[type] = ++boxNumber
+    $goodInfoBoxWrapper.appendChild(createGoodInfoBox(type))
   }
 
   const $removeGoodInfoBoxBtn = _.createButton('Remove', [
@@ -71,18 +80,49 @@ export default function createEditVoucherForm(
     'mx-1',
   ])
   function handleRemoveBox() {
-    if ($goodInfoBoxWrapper.lastChild) {
-      boxNumber--
-      $goodInfoBoxWrapper.lastChild.remove()
-      const [cleaner1, cleaner2] = boxEvtCleaners.pop()
-      cleaner1()
-      cleaner2()
-    }
+    if (!$goodInfoBoxWrapper.lastChild) return
+
+    boxNumber--
+    $goodInfoBoxWrapper.lastChild.remove()
+    const {
+      type,
+      cleaners: [cleaner1, cleaner2],
+    } = boxEvtCleaners.pop()
+    cleaner1()
+    cleaner2()
+    addedGoodTypes[type] = false
   }
 
-  function createGoodInfoBox(amount = '', rate = 0, charge = 0) {
-    const $boxNo = _.createSpan(`NO . ${++boxNumber}`, ['good-box-no'])
+  const $typeSelect = _.createSelect(['good-type-select', 'form-select'], '', [
+    {
+      value: 'b/r/n',
+      text: 'B R N',
+    },
+    {
+      value: 'b/r/wn',
+      text: 'B R WN',
+    },
+    {
+      value: 'w/r/n',
+      text: 'W R N',
+    },
+  ])
+
+  function createGoodInfoBox(
+    type = 'b/r/n',
+    amount = '',
+    rate = 0,
+    charge = 0
+  ) {
+    const $boxNo = _.createSpan(`NO . ${boxNumber}`, ['good-box-no'])
     // type
+    const $type = _.createInput('', ['form-control', 'good-type'], '', {
+      value: type
+        .split('/')
+        .map((str) => `${str.toUpperCase()}`)
+        .join(' '),
+      disabled: true,
+    })
 
     function handleChange() {
       const amount = Number($amountIp.value.split(/[ -]/)[0])
@@ -90,20 +130,6 @@ export default function createEditVoucherForm(
       $chargeIp.value = amount * rate
     }
 
-    const $typeSelect = _.createSelect(
-      ['good-type-select', 'form-select'],
-      '',
-      [
-        {
-          value: 'c/b/r/s',
-          text: 'Chin, Black, Raw, Small',
-        },
-        {
-          value: 'c/b/r/b',
-          text: 'Chin, Black, Raw, Big',
-        },
-      ]
-    )
     // amount
     const [$amountIp, amountIpEvtCleaner] = _.createInput(
       '',
@@ -132,16 +158,26 @@ export default function createEditVoucherForm(
       'number',
       ['form-control', 'good-charge-ip', 'my-1'],
       '',
-      { value: charge }
+      { value: charge, disabled: true }
     )
-    boxEvtCleaners.push([amountIpEvtCleaner, rateIpEvtCleaner])
+    boxEvtCleaners.push({
+      type,
+      cleaners: [amountIpEvtCleaner, rateIpEvtCleaner],
+    })
     return _.createElement(
       '',
       '',
       ['good-info-box'],
-      [$boxNo, $typeSelect, $amountIp, $rateIp, $chargeIp]
+      [$boxNo, $type, $amountIp, $rateIp, $chargeIp]
     )
   }
+
+  const $goodInfoBoxControllers = _.createElement(
+    '',
+    '',
+    ['controllers'],
+    [$addGoodInfoBoxBtn, $typeSelect, $removeGoodInfoBoxBtn]
+  )
 
   const $paidLb = _.createLabel('Paid', 'edit_vc_paid', ['form-label'])
   const $paidIp = _.createInput('', ['form-control'], 'edit_vc_paid')
@@ -166,8 +202,7 @@ export default function createEditVoucherForm(
 
   const $formBody = _.createFragment([
     $goodInfoBoxWrapper,
-    $addGoodInfoBoxBtn,
-    $removeGoodInfoBoxBtn,
+    $goodInfoBoxControllers,
     $paidLb,
     $paidIp,
     $methodLb,
@@ -191,7 +226,7 @@ export default function createEditVoucherForm(
       const paid = Number($paidIp.value)
       const cancelled = $cancelCheckBox.checked
       const [totalAmount, totalCharge, goodInfo] = await convertToGoodInfoData(
-        _.getAllNodes('.good-type-select'),
+        _.getAllNodes('.good-type'),
         _.getAllNodes('.good-amount-ip'),
         _.getAllNodes('.good-rate-ip'),
         _.getAllNodes('.good-charge-ip')
@@ -265,9 +300,13 @@ export default function createEditVoucherForm(
     boxNumber = 0
 
     while (boxEvtCleaners[0]) {
-      const [cleaner1, cleaner2] = boxEvtCleaners.pop()
+      const {
+        type,
+        cleaners: [cleaner1, cleaner2],
+      } = boxEvtCleaners.pop()
       cleaner1()
       cleaner2()
+      addedGoodTypes[type] = false
     }
     _.emptyChild($goodInfoBoxWrapper)
   }
@@ -281,8 +320,14 @@ export default function createEditVoucherForm(
     $createdOn.textContent = createdOn
     //setup body
     goodInfo.forEach(async (info) => {
+      const { type, amount, rate, charge } = info
+      if (addedGoodTypes[type]) {
+        notifier.on('sww', 'error')
+        return
+      }
+      addedGoodTypes[type] = ++boxNumber
       $goodInfoBoxWrapper.appendChild(
-        await createGoodInfoBox(info.amount, info.rate, info.charge)
+        await createGoodInfoBox(type, amount, rate, charge)
       )
     })
     //setup footer

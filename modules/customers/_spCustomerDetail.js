@@ -72,16 +72,24 @@ function createCustomerDetail(__whenQuitFunc) {
     createEditVoucherForm(__whenDeleteVoucher, __whenUpdateVoucher)
 
   async function __whenDeleteVoucher() {
-    customerInfo = await getACustomerInfo(customerInfo.id)
-    ih_updateCustomerStars()
+    try {
+      customerInfo = await getACustomerInfo(customerInfo.id)
+      ih_updateCustomerStars()
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   async function __whenUpdateVoucher(data) {
-    customerInfo = await getACustomerInfo(customerInfo.id)
-    ih_updateCustomerStars()
-    const $updatedNode = await createVoucherCard(data)
-    state.$editingVoucher.replaceWith($updatedNode)
-    state.$editingVoucher = $updatedNode
+    try {
+      customerInfo = await getACustomerInfo(customerInfo.id)
+      ih_updateCustomerStars()
+      const $updatedNode = await createVoucherCard(data)
+      state.$editingVoucher.replaceWith($updatedNode)
+      state.$editingVoucher = $updatedNode
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   function ih_updateCustomerStars() {
@@ -209,36 +217,39 @@ function createCustomerDetail(__whenQuitFunc) {
       $chart.remove()
       isChartSetup = false
     }
-    // set up info
-    const { customerData, vouchersData } = await getCustomerAndHisVouchersById(
-      id
-    )
-    // store temporary
-    customerInfo = { ...customerData }
-    $customerNodeFromList = _.getNodeById(`cusId-${customerInfo.id}`)
-    customerVouchers = [...vouchersData]
+    try {
+      // set up info
+      const { customerData, vouchersData } =
+        await getCustomerAndHisVouchersById(id)
+      // store temporary
+      customerInfo = { ...customerData }
+      $customerNodeFromList = _.getNodeById(`cusId-${customerInfo.id}`)
+      customerVouchers = [...vouchersData]
 
-    // show info
-    ih_setUpCustomerInfoBox()
-    await countStarsAnimate($starCounter, customerInfo.stars)
+      // show info
+      ih_setUpCustomerInfoBox()
+      await countStarsAnimate($starCounter, customerInfo.stars)
 
-    // setUpChart
-    if (customerVouchers.length > 11 && window.innerWidth > 800) {
-      await __setUpChart(customerVouchers)
-      $chartContainer.appendChild($chart)
-      isChartSetup = true
+      // setUpChart
+      if (customerVouchers.length > 11 && window.innerWidth > 800) {
+        await __setUpChart(customerVouchers)
+        $chartContainer.appendChild($chart)
+        isChartSetup = true
+      }
+
+      _.emptyChild($customerVouchers)
+      ih_appendVoucherCards()
+      ioLoadedCount = 4
+      intersectionObserver.observe($intersectionObserver)
+
+      lockNav(`${customerInfo.favorite ? '✨ ' : ''}${customerInfo.name}`, true)
+
+      _.on('click', $editCustomerBtn, handleEditCustomerClick)
+      _.on('click', $backToCustomersBtn, handleBackToCustomerPage)
+      _.on('click', $customerVouchers, handleClickOnVoucher)
+    } catch (error) {
+      console.log(error)
     }
-
-    _.emptyChild($customerVouchers)
-    ih_appendVoucherCards()
-    ioLoadedCount = 4
-    intersectionObserver.observe($intersectionObserver)
-
-    lockNav(`${customerInfo.favorite ? '✨ ' : ''}${customerInfo.name}`, true)
-
-    _.on('click', $editCustomerBtn, handleEditCustomerClick)
-    _.on('click', $backToCustomersBtn, handleBackToCustomerPage)
-    _.on('click', $customerVouchers, handleClickOnVoucher)
   }
 
   async function __cleanUpFunc() {

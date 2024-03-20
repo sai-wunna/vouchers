@@ -18,8 +18,12 @@ function createCustomerChart() {
   const $main = _.createElement('', '', ['chart-wrapper'], [$chart])
 
   async function __setUpFunc(vouchers) {
-    const chartData = await buildCustomerChartData(vouchers)
-    await setUpChart(chartData)
+    try {
+      const chartData = await buildCustomerChartData(vouchers)
+      await setUpChart(chartData)
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   function __cleanUpFunc() {

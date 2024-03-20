@@ -11,9 +11,9 @@ function convertToGoodInfoData(typeNodes, amountNodes, rateNodes, chargeNodes) {
     totalAmount += Number(amount.split('vis')[0])
 
     goodInfo.push({
-      type: typeNode.value,
-      amount,
+      type: typeNode.value.toLowerCase().split(' ').join('/'),
       rate: Number(rateNodes[index].value),
+      amount,
       charge,
     })
   })

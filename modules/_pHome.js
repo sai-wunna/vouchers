@@ -163,16 +163,21 @@ export default () => {
   async function handleClickOnInfoWrapper(e) {
     if (e.target.tagName !== 'TD') return
 
-    state.$editingVoucher = e.target.parentElement
+    try {
+      state.$editingVoucher = e.target.parentElement
 
-    const id = Number(e.target.parentElement.dataset.vid)
-    const { customer, receipt } = await getAVoucher(id)
-    if (e.target.dataset.edit) {
-      await __setUpEditVoucherForm(receipt)
-      openModal($editVoucherForm)
-    } else {
-      await __setUpReceiptPaper(customer, receipt)
-      openModal($receiptPaper)
+      const id = Number(e.target.parentElement.dataset.vid)
+      const { customer, receipt } = await getAVoucher(id)
+      if (e.target.dataset.edit) {
+        await __setUpEditVoucherForm(receipt)
+        openModal($editVoucherForm)
+      } else {
+        await __setUpReceiptPaper(customer, receipt)
+        openModal($receiptPaper)
+      }
+    } catch (error) {
+      console.log(error)
+      notifier.on('sww', 'error')
     }
   }
 

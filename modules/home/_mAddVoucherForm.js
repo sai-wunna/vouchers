@@ -1,12 +1,6 @@
 'use strict'
 
-import {
-  saveNewCustomer,
-  saveNewVoucher,
-  searchCustomer,
-  vouchers,
-  getACustomerInfo,
-} from '../state.js'
+import { saveNewCustomer, saveNewVoucher, searchCustomer } from '../state.js'
 import _ from '../dom/index.js'
 import notifier from '../notify.js'
 import { createModal } from '../helpers/createModal.js'
@@ -20,6 +14,7 @@ export default (__whenCreateNewVoucher) => {
 
   // name
   let newUser = true
+  const searchCustomerResult = []
   let customerInfo = null
   let searchNameBlocker = null
   const $nameLb = _.createLabel('Customer Name', 'add_vc_cus_name', [
@@ -31,26 +26,39 @@ export default (__whenCreateNewVoucher) => {
   })
 
   function handleNameSearch(e) {
-    newUser = true
-    $addressIp.disabled = false
-    $phoneIp.disabled = false
-    clearTimeout(searchNameBlocker)
-    _.emptyChild($nameList)
-    if (!e.target.value) return
-
-    searchNameBlocker = setTimeout(async () => {
-      const names = await searchCustomer(
-        e.target.value.trim().toLowerCase(),
-        'name'
-      )
+    try {
+      newUser = true
+      $addressIp.disabled = false
+      $phoneIp.disabled = false
+      clearTimeout(searchNameBlocker)
       _.emptyChild($nameList)
-      $nameList.appendChild(ih_createExistedCusName(names))
-    }, 300)
+      if (!e.target.value) return
+
+      searchNameBlocker = setTimeout(async () => {
+        const searchedCustomers = await searchCustomer(
+          e.target.value.trim().toLowerCase(),
+          'name'
+        )
+
+        searchCustomerResult.splice(
+          0,
+          searchCustomerResult.length,
+          ...searchedCustomers
+        )
+
+        _.emptyChild($nameList)
+        $nameList.appendChild(ih_createExistedCusName(searchedCustomers))
+      }, 300)
+    } catch (error) {
+      console.log(error)
+      notifier.on('sww', 'error')
+    }
   }
 
   function ih_createExistedCusName(users) {
     const fragment = _.createFragment()
-    for (const user of users) {
+
+    users.forEach((user, idx) => {
       const nameInfo = _.createElement(
         '',
         `${user.name} ${
@@ -62,21 +70,25 @@ export default (__whenCreateNewVoucher) => {
         }`,
         ['existed-cus-name']
       )
-      nameInfo.dataset.cusId = user.id
+      nameInfo.dataset.cusIdx = idx
       fragment.appendChild(nameInfo)
-    }
+    })
 
     return fragment
   }
 
   const $nameList = _.createElement('', '', ['existed-customer-list'])
   async function setUserFromList(e) {
-    if (!e.target.dataset.cusId) return
-    customerInfo = await getACustomerInfo(Number(e.target.dataset.cusId))
+    const idx = e.target.dataset.cusIdx
+    if (!idx) return
+
+    customerInfo = searchCustomerResult[Number(idx)]
+    searchCustomerResult.splice(0) // clear arr after select customer
     $nameIp.value = customerInfo.name
     $addressIp.value = customerInfo.address
     $phoneIp.value = customerInfo.phone
     newUser = false
+
     _.emptyChild($nameList)
     $addressIp.disabled = true
     $phoneIp.disabled = true
@@ -117,15 +129,33 @@ export default (__whenCreateNewVoucher) => {
   // goods info box
   let boxNumber = 0
   const boxEvtCleaners = []
+  const addedGoodTypes = { 'b/r/n': false, 'b/r/wn': false, 'w/r/n': false } // it depends mustupdate mustupdate mustupdate
 
-  const $addGoodInfoBoxBtn = _.createButton('Add Sheet', [
-    'btn',
-    'btn-blue',
-    'mx-1',
-  ])
+  const $typeSelect = _.createSelect(['good-type-select', 'form-select'], '', [
+    {
+      value: 'b/r/n',
+      text: 'B R N',
+    },
+    {
+      value: 'b/r/wn',
+      text: 'B R WN',
+    },
+    {
+      value: 'w/r/n',
+      text: 'W R N',
+    },
+  ]) // it depends mustupdate mustupdate mustupdate
+
+  const $addGoodInfoBoxBtn = _.createButton('Add', ['btn', 'btn-blue', 'mx-1'])
 
   function handleAddBox() {
-    $goodInfoBoxWrapper.appendChild(createGoodInfoBox())
+    const type = $typeSelect.value
+    if (addedGoodTypes[type]) {
+      notifier.on('sameGoodTypeAdded', 'warning')
+      return
+    }
+    addedGoodTypes[type] = ++boxNumber
+    $goodInfoBoxWrapper.appendChild(createGoodInfoBox(type))
   }
 
   const $removeGoodInfoBoxBtn = _.createButton('Remove', [
@@ -135,19 +165,25 @@ export default (__whenCreateNewVoucher) => {
   ])
 
   function handleRemoveBox() {
-    if ($goodInfoBoxWrapper.lastChild) {
-      boxNumber--
-      $goodInfoBoxWrapper.lastChild.remove()
-      const [cleaner1, cleaner2] = boxEvtCleaners.pop()
-      cleaner1()
-      cleaner2()
-    }
+    if (!$goodInfoBoxWrapper.lastChild) return
+
+    boxNumber--
+    $goodInfoBoxWrapper.lastChild.remove()
+    const {
+      type,
+      cleaners: [cleaner1, cleaner2],
+    } = boxEvtCleaners.pop()
+
+    addedGoodTypes[type] = false
+
+    cleaner1()
+    cleaner2()
   }
 
   const $goodInfoBoxWrapper = _.createElement('', '', ['good-info-box-wrapper'])
 
-  function createGoodInfoBox() {
-    const $boxNo = _.createSpan(`NO . ${++boxNumber}`, ['good-box-no'])
+  function createGoodInfoBox(goodType) {
+    const $boxNo = _.createSpan(`NO . ${boxNumber}`, ['good-box-no'])
     // type
 
     function handleChange() {
@@ -156,20 +192,11 @@ export default (__whenCreateNewVoucher) => {
       $chargeIp.value = amount * rate
     }
 
-    const $typeSelect = _.createSelect(
-      ['good-type-select', 'form-select'],
-      '',
-      [
-        {
-          value: 'c/b/r/s',
-          text: 'Chin, Black, Raw, Small',
-        },
-        {
-          value: 'c/b/r/b',
-          text: 'Chin, Black, Raw, Big',
-        },
-      ]
-    )
+    const $type = _.createInput('', ['form-control', 'good-type-Ip'], '', {
+      value: goodType.toUpperCase().split('/').join(' '),
+      disabled: true,
+    })
+
     // amount
     const [$amountIp, amountIpEvtCleaner] = _.createInput(
       '',
@@ -191,19 +218,30 @@ export default (__whenCreateNewVoucher) => {
       true
     )
     // charge
-    const $chargeIp = _.createInput('number', [
-      'form-control',
-      'good-charge-ip',
-      'my-1',
-    ])
-    boxEvtCleaners.push([amountIpEvtCleaner, rateIpEvtCleaner])
+    const $chargeIp = _.createInput(
+      'number',
+      ['form-control', 'good-charge-ip', 'my-1'],
+      '',
+      { disabled: true }
+    )
+    boxEvtCleaners.push({
+      type: goodType,
+      cleaners: [amountIpEvtCleaner, rateIpEvtCleaner],
+    })
     return _.createElement(
       '',
       '',
       ['good-info-box'],
-      [$boxNo, $typeSelect, $amountIp, $rateIp, $chargeIp]
+      [$boxNo, $type, $amountIp, $rateIp, $chargeIp]
     )
   }
+
+  const $goodInfoBoxControllers = _.createElement(
+    '',
+    '',
+    ['controllers'],
+    [$addGoodInfoBoxBtn, $typeSelect, $removeGoodInfoBoxBtn]
+  )
 
   // note
   const $noteTArea = _.createTextArea(
@@ -246,7 +284,7 @@ export default (__whenCreateNewVoucher) => {
       const note = $noteTArea.value
       const paymentMethod = $methodSelect.value
       const [totalAmount, totalCharge, goodInfo] = convertToGoodInfoData(
-        _.getAllNodes('.good-type-select'),
+        _.getAllNodes('.good-type-Ip'),
         _.getAllNodes('.good-amount-ip'),
         _.getAllNodes('.good-rate-ip'),
         _.getAllNodes('.good-charge-ip')
@@ -285,8 +323,7 @@ export default (__whenCreateNewVoucher) => {
       $phoneLb,
       $phoneIp,
       $goodInfoBoxWrapper,
-      $addGoodInfoBoxBtn,
-      $removeGoodInfoBoxBtn,
+      $goodInfoBoxControllers,
       $paidLb,
       $paidIp,
       $methodLb,
@@ -307,10 +344,17 @@ export default (__whenCreateNewVoucher) => {
     $paidIp.value = ''
     $noteTArea.value = ''
     $methodSelect[0].selected = true
+    searchCustomerResult.splice(0)
     _.emptyChild($goodInfoBoxWrapper)
     _.emptyChild($nameList)
     while (boxEvtCleaners[0]) {
-      const [cleaner1, cleaner2] = boxEvtCleaners.pop()
+      const {
+        type,
+        cleaners: [cleaner1, cleaner2],
+      } = boxEvtCleaners.pop()
+
+      addedGoodTypes[type] = false
+
       cleaner1()
       cleaner2()
     }

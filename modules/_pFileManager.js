@@ -7,7 +7,6 @@ import {
   vouchers,
   buildSalesTableData,
   buildMonthlyChartData,
-  buildTotalChartData,
   buildForThisYearChartData,
 } from './state.js'
 import notifier from './notify.js'
@@ -26,7 +25,7 @@ export default () => {
 
   const $exceptedFileVersion = _.createHeading('h2', '------')
 
-  const $importFileHeader = _.createHeading('h3', 'Imported File Data')
+  const $importFileHeader = _.createHeading('h3', 'Imported Data')
   const $ifTotalVouchers = _.createElement(
     'p',
     `${totalVouchers ? `Total Vouchers Recorded : ${totalVouchers}` : '---'}`
@@ -100,21 +99,26 @@ export default () => {
   async function handleConfirm(e) {
     if (!fileData) return
     lockBtn(e.target, 5000)
-    notifier.__start('Building Data', 'info')
-    state.importedFileData.totalVouchers = fileData.vouchers.length
-    state.importedFileData.totalCustomers = fileData.customers.length
-    state.importedFileData.timePeriod = fileData.timePeriod
-    state.importedFileData.version = fileData.version
+    try {
+      notifier.__start('Building Data', 'info')
+      state.importedFileData.totalVouchers = fileData.vouchers.length
+      state.importedFileData.totalCustomers = fileData.customers.length
+      state.importedFileData.timePeriod = fileData.timePeriod
+      state.importedFileData.version = fileData.version
 
-    vouchers.data.splice(0, vouchers.data.length, ...fileData.vouchers)
-    customers.splice(0, customers.length, ...fileData.customers)
+      vouchers.data.splice(0, vouchers.data.length, ...fileData.vouchers)
+      customers.splice(0, customers.length, ...fileData.customers)
 
-    await buildForThisYearChartData()
-    await buildSalesTableData()
-    await buildMonthlyChartData()
+      await buildForThisYearChartData()
+      await buildSalesTableData()
+      await buildMonthlyChartData()
 
-    vouchers.currentPage = 0
-    notifier.__end('Ready', 'info')
+      vouchers.currentPage = 0
+      notifier.__end('Ready', 'info')
+    } catch (error) {
+      notifier.__end('Something Went Wrong', 'error')
+      console.log(error)
+    }
   }
 
   const $importedFileDataBox = _.createElement(

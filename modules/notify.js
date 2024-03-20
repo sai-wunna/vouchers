@@ -24,7 +24,9 @@ class Notify {
     versionConflict: 'File version are not same !!!',
     outOfDataForChart: 'No enough data to build chart',
     chartForPcOnly: 'Only Work In large Screen',
+    sameGoodTypeAdded: 'Same Good Type Added !!',
   }
+
   #countLimit = 3
   #currentCount = 0
   #$progressLoader

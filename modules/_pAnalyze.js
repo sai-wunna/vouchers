@@ -48,8 +48,9 @@ export default () => {
               '',
               ['bar-amount-info'],
               [
-                _.createSpan(`${info.percentage}% ${info.type}`),
-                _.createSpan(`${info.amount.toLocaleString()} ks`),
+                _.createSpan(`${info.percentage}%`),
+                _.createSpan(`${info.type}`),
+                _.createSpan(`${info.charge.toLocaleString()} ks`),
               ]
             ),
           ]
@@ -82,24 +83,29 @@ export default () => {
       notifier.on('chartForPcOnly', 'info')
       return
     }
-    const period = e.target.dataset.period
-    const percentage = salesTableData[period].percentage
+    try {
+      const period = e.target.dataset.period
+      const percentage = salesTableData[period].percentage
 
-    const chartData = getChartData(period)
-    if (!chartData) {
-      notifier.on('outOfDataForChart', 'warning')
-      return
+      const chartData = getChartData(period)
+      if (!chartData) {
+        notifier.on('outOfDataForChart', 'warning')
+        return
+      }
+
+      await __setUpChart(period, chartData)
+      lockNav(
+        `In ${period} ${percentage} ${
+          period === 'thisYear' ? '' : 'of total Sales'
+        }`,
+        true
+      )
+      $salesTable.classList.add('d-none')
+      $chart.classList.remove('d-none')
+    } catch (error) {
+      console.log(error)
+      notifier.on('sww', 'error')
     }
-
-    await __setUpChart(period)
-    lockNav(
-      `In ${period} ${percentage} ${
-        period === 'thisYear' ? '' : 'of total Sales'
-      }`,
-      true
-    )
-    $salesTable.classList.add('d-none')
-    $chart.classList.remove('d-none')
   }
 
   const $salesTable = _.createElement(

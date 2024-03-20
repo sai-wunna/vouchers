@@ -15,18 +15,23 @@ export default ($customerList) => {
       placeholder: 'type here to search . . .',
     }
   )
+
   function handleSearch(e) {
-    _.emptyChild($customerList)
-    clearTimeout(spamBlocker)
-    if (!e.target.value) return
-    spamBlocker = setTimeout(async () => {
-      const customers = await searchCustomer(
-        e.target.value,
-        $searchTypeSelect.value
-      )
-      const $customers = await createCustomerRows(customers)
-      $customerList.appendChild($customers)
-    }, 300)
+    try {
+      _.emptyChild($customerList)
+      clearTimeout(spamBlocker)
+      if (!e.target.value) return
+      spamBlocker = setTimeout(async () => {
+        const customers = await searchCustomer(
+          e.target.value,
+          $searchTypeSelect.value
+        )
+        const $customers = await createCustomerRows(customers)
+        $customerList.appendChild($customers)
+      }, 300)
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   const $searchTypeSelect = _.createSelect(['search-type-select'], '', [

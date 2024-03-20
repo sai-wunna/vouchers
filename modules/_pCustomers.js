@@ -8,7 +8,7 @@ import {
 } from './customers/_ncCustomerRow.js'
 import searchCustomerForm from './customers/_cSearchCustomerForm.js'
 import createCustomerDetail from './customers/_spCustomerDetail.js'
-import { customers, sortCustomersBy } from './state.js'
+import { customers, sortCustomersBy, state } from './state.js'
 import createAddCustomerForm from './customers/_mAddCustomerForm.js'
 import { openModal } from './helpers/createModal.js'
 import lockBtn from './helpers/lockBtn.js'
@@ -85,33 +85,54 @@ export default () => {
     searchMode = !searchMode
   }
 
-  const $sortUsersSelect = _.createSelect(['search-type-select'], '', [
+  const $sortCustomersBySelect = _.createSelect(['search-type-select'], '', [
     { value: 'stars', text: 'Stars' },
     { value: 'favorite', text: 'Favorite' },
-    { value: 'olderFirst', text: 'Latest First' },
-    { value: 'newerFirst', text: 'Oldest First' },
+    { value: 'newerFirst', text: 'Latest First' },
+    { value: 'olderFirst', text: 'Oldest First' },
   ])
 
   async function handleSortUsers(e) {
-    notifier.__startILLoader()
-    e.target.disabled = true
+    try {
+      notifier.__startILLoader()
+      e.target.disabled = true
 
-    sortedCustomersData = await sortCustomersBy(e.target.value)
-    _.emptyChild($customerList)
-    ih_appendCustomerRows()
-    ioLoadedCount = 20
-    ioScrollBack = true
+      const sortBy = e.target.value
 
-    let timerId = setTimeout(() => {
-      e.target.disabled = false
-      clearTimeout(timerId)
-    }, 5000)
-    notifier.__endILLoader()
+      sortedCustomersData = await sortCustomersBy(sortBy)
+      _.emptyChild($customerList)
+      ih_appendCustomerRows()
+      ioLoadedCount = 20
+      ioScrollBack = true
+
+      state.sortCustomersBy = sortBy
+
+      let timerId = setTimeout(() => {
+        e.target.disabled = false
+        clearTimeout(timerId)
+      }, 5000)
+      notifier.__endILLoader()
+    } catch (error) {
+      console.log(error)
+      notifier.on('sww', 'error')
+    }
+  }
+
+  function ih_setSelectedInSortBy() {
+    const optionsMapping = {
+      stars: 0,
+      favorite: 1,
+      newerFirst: 2,
+      olderFirst: 3,
+    }
+
+    const index = optionsMapping[state.sortCustomersBy]
+    $sortCustomersBySelect[index].selected = true
   }
 
   const $sortSelectBox = _.createElement('', '', '', [
     _.createElement('span', 'Sort By'),
-    $sortUsersSelect,
+    $sortCustomersBySelect,
   ])
 
   const $controllers = _.createElement(
@@ -177,14 +198,20 @@ export default () => {
   )
 
   async function __setupFunc() {
-    await __setUpSearchBox()
-    _.on('click', $addCustomerBtn, handleAddCustomerModal)
-    _.on('click', $searchCustomerBtn, handleSearchCustomerModal)
-    _.on('click', $customerList, handleClickOnCustomerList)
-    _.on('change', $sortUsersSelect, handleSortUsers)
-    sortedCustomersData = await sortCustomersBy('stars')
-    ih_appendCustomerRows()
-    intersectionObserver.observe($intersectionObserver)
+    try {
+      await __setUpSearchBox()
+      _.on('click', $addCustomerBtn, handleAddCustomerModal)
+      _.on('click', $searchCustomerBtn, handleSearchCustomerModal)
+      _.on('click', $customerList, handleClickOnCustomerList)
+      _.on('change', $sortCustomersBySelect, handleSortUsers)
+      sortedCustomersData = await sortCustomersBy(state.sortCustomersBy)
+      ih_setSelectedInSortBy()
+      ih_appendCustomerRows()
+      intersectionObserver.observe($intersectionObserver)
+    } catch (error) {
+      console.log(error)
+      notifier.on('sww', 'error')
+    }
   }
 
   async function __cleanupFunc() {
@@ -192,7 +219,7 @@ export default () => {
     await __cleanUpSearchBox()
     await __cleanUpCustomerDetail()
     await __cleanUpAddCustomerForm()
-    _.removeOn('change', $sortUsersSelect, handleSortUsers)
+    _.removeOn('change', $sortCustomersBySelect, handleSortUsers)
     _.removeOn('click', $addCustomerBtn, handleAddCustomerModal)
     _.removeOn('click', $searchCustomerBtn, handleSearchCustomerModal)
     _.removeOn('click', $customerList, handleClickOnCustomerList)

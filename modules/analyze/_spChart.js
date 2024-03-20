@@ -15,17 +15,21 @@ export default (__whenQuitSubPage) => {
     createConfigChartBox(__whenUpdateConfig)
 
   async function __whenUpdateConfig() {
-    const data = getChartData(chartDataPeriod)
-    myChart.config._config.type = chartConfig.chartType
-    myChart.data = data
-    myChart.update()
+    try {
+      const data = getChartData(chartDataPeriod)
+      myChart.config._config.type = chartConfig.chartType
+      myChart.data = data
+      myChart.update()
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   const $chart = _.createElement('canvas', '', [], [])
   let myChart = null
 
-  async function setUpChart() {
-    const data = await getChartData(chartDataPeriod)
+  async function setUpChart(chartData) {
+    const data = chartData || (await getChartData(chartDataPeriod))
     myChart = new Chart($chart, {
       type: chartConfig.chartType,
       data: data,
@@ -95,13 +99,6 @@ export default (__whenQuitSubPage) => {
     ]
   )
 
-  function handleResize(e) {
-    e.preventDefault()
-    if (myChart) {
-      myChart.resize()
-    }
-  }
-
   const $main = _.createElement(
     '',
     '',
@@ -115,10 +112,9 @@ export default (__whenQuitSubPage) => {
     _.removeOn('click', $backToTable, handleBack)
     _.removeOn('click', $toPrevSalePeriod, handlePrevChart)
     _.removeOn('click', $toNextSalePeriod, handleNextChart)
-    _.removeOn('resize', window, handleResize) // should not use in production
   }
 
-  async function __setUpFunc(period) {
+  async function __setUpFunc(period, chartData) {
     if (!chartDataPeriod) {
       // only for first time
       await __setUpConfigBox()
@@ -132,11 +128,10 @@ export default (__whenQuitSubPage) => {
       (period) => period === chartDataPeriod
     )
     ih_updatePrevNextBtn()
-    await setUpChart()
+    await setUpChart(chartData)
     _.on('click', $backToTable, handleBack)
     _.on('click', $toPrevSalePeriod, handlePrevChart)
     _.on('click', $toNextSalePeriod, handleNextChart)
-    _.on('resize', window, handleResize)
   }
 
   async function __cleanUpFunc() {
