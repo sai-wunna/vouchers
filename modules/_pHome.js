@@ -52,7 +52,7 @@ export default () => {
     ih_updateCurrentPageInfo()
   }
 
-  const $toPrevPageBtn = _.createButton('←', ['btn', 'btn-ghost', 'mx-1'])
+  const $toPrevPageBtn = _.createButton('←', ['back-btn', 'mx-1'])
   async function handlePageChangePrev(e) {
     notifier.__start('Loading . . .')
     const data = vouchers.data.slice(
@@ -70,7 +70,7 @@ export default () => {
     }
   }
 
-  const $toNextPageBtn = _.createButton('→', ['btn', 'btn-ghost'])
+  const $toNextPageBtn = _.createButton('→', ['forth-btn'])
   async function handlePageChangeNext(e) {
     notifier.__start('Loading . . .')
     const data = vouchers.data.slice(

@@ -24,16 +24,16 @@ const goodTypeToChartLabel = {
 
 const baseSetupForChartDataSet = {
   'b/r/n': {
-    borderColor: 'rgba(246, 255, 0, 0.6)',
-    backgroundColor: 'rgba(246, 255, 0, 0.6)',
+    borderColor: 'rgba(246, 255, 0, 0.7)',
+    backgroundColor: 'rgba(246, 255, 0, 0.7)',
   },
   'b/r/wn': {
-    borderColor: 'rgba(0, 60, 255, 0.6)',
-    backgroundColor: 'rgba(0, 60, 255, 0.6)',
+    borderColor: 'rgba(0, 60, 255, 0.7)',
+    backgroundColor: 'rgba(0, 60, 255, 0.7)',
   },
   'w/r/n': {
-    borderColor: 'rgba(255, 0, 0, 0.6)',
-    backgroundColor: 'rgba(255, 0, 0, 0.6)',
+    borderColor: 'rgba(255, 0, 0, 0.7)',
+    backgroundColor: 'rgba(255, 0, 0, 0.7)',
   },
 }
 

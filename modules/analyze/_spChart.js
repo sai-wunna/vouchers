@@ -37,7 +37,7 @@ export default (__whenQuitSubPage) => {
     })
   }
 
-  const $backToTable = _.createButton('Back', ['btn', 'btn-ghost'])
+  const $backToTable = _.createButton('Back', ['back-btn'])
 
   function handleBack() {
     $main.classList.add('d-none')
@@ -46,7 +46,7 @@ export default (__whenQuitSubPage) => {
     unlockNav()
   }
 
-  const $toPrevSalePeriod = _.createButton('', ['btn', 'btn-ghost', 'mx-1'])
+  const $toPrevSalePeriod = _.createButton('', ['back-btn', 'mx-1'])
   function handlePrevChart() {
     chartDataPeriod = availableCharts[(currentChartIdx -= 1)]
     __whenUpdateConfig()
@@ -54,7 +54,7 @@ export default (__whenQuitSubPage) => {
     ih_updatePrevNextBtn()
   }
 
-  const $toNextSalePeriod = _.createButton('', ['btn', 'btn-ghost', 'mx-1'])
+  const $toNextSalePeriod = _.createButton('', ['forth-btn', 'mx-1'])
   function handleNextChart() {
     chartDataPeriod = availableCharts[(currentChartIdx += 1)]
     __whenUpdateConfig()

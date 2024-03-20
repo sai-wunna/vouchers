@@ -22,7 +22,7 @@ function createCustomerDetail(__whenQuitFunc) {
   let customerVouchers = null
   let cleanMemoTimer = null
 
-  const $backToCustomersBtn = _.createButton('Back', ['btn', 'btn-ghost'])
+  const $backToCustomersBtn = _.createButton('Back', ['back-btn'])
   function handleBackToCustomerPage() {
     __whenQuitFunc()
     cleanMemoTimer = setTimeout(() => {
