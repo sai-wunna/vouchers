@@ -1,8 +1,9 @@
 'use strict'
 
-import _ from './dom/index.js'
-import notifier from './notify.js'
-import $loadingPage from './general/_ncLoadingPage.js'
+import _ from './modules/dom/index.js'
+import notifier from './modules/notify.js'
+import $loadingPage from './modules/general/_ncLoadingPage.js'
+import './styles.css'
 
 // --- ignite
 ;(() => {
@@ -24,7 +25,7 @@ import $loadingPage from './general/_ncLoadingPage.js'
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
     setActiveNav(e.target)
-    switchPage((await import('./_pHome.js')).default)
+    switchPage((await import('./modules/_pHome.js')).default)
     updateTitle('Home')
   })
 
@@ -36,7 +37,7 @@ import $loadingPage from './general/_ncLoadingPage.js'
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
     setActiveNav(e.target)
-    switchPage((await import('./_pCustomers.js')).default)
+    switchPage((await import('./modules/_pCustomers.js')).default)
     updateTitle('Customers')
   })
 
@@ -48,7 +49,7 @@ import $loadingPage from './general/_ncLoadingPage.js'
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
     setActiveNav(e.target)
-    switchPage((await import('./_pAnalyze.js')).default)
+    switchPage((await import('./modules/_pAnalyze.js')).default)
     updateTitle('Analyze')
   })
 
@@ -60,7 +61,7 @@ import $loadingPage from './general/_ncLoadingPage.js'
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
     setActiveNav(e.target)
-    switchPage((await import('./_pFileManager.js')).default)
+    switchPage((await import('./modules/_pFileManager.js')).default)
     updateTitle('File Manager')
   })
 
@@ -95,14 +96,15 @@ import $loadingPage from './general/_ncLoadingPage.js'
     document.title = page
   }
 
-  _.on('beforeunload', window, (e) => {
-    e.preventDefault()
-    e.returnValue = ''
-    return ''
-  })
+  // _.on('beforeunload', window, (e) => {
+  //   e.preventDefault()
+  //   e.returnValue = ''
+  //   return ''
+  // })
+
   ;(async () => {
     $pageWrapper.appendChild(_.createNode('br'))
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
-    switchPage((await import('./_pHome.js')).default)
+    switchPage((await import('./modules/_pHome.js')).default)
   })()
 })()

@@ -1,0 +1,27 @@
+{
+  "manifest_version": 1,
+  "version": "0.0.1",
+  "name": "voucher",
+  "short_name": "voucher",
+  "start_url": ".",
+  "background_color": "white",
+  "theme_color": "black",
+  "display": "standalone",
+  "orientation": "landscape",
+  "author": "sai wunna",
+  "description": "Sales Record",
+  "icons": [
+    {
+      "src": "assets/android-chrome-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/android-chrome-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}
