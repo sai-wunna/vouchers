@@ -5,6 +5,7 @@ import {
   tHeader,
   convertToTBDataNTotalAmount,
 } from '../helpers/receiptTBodyDataParser.js'
+import { state } from '../state.js'
 
 function createVoucherCard(data) {
   const {
@@ -17,6 +18,8 @@ function createVoucherCard(data) {
     paid,
     cancelled,
   } = data
+
+  const currency = state.appConfig.currency
 
   const $editBtn = _.createButton('Edit', ['btn-corner-right', 'btn-blue'])
   $editBtn.dataset.vid = id
@@ -41,10 +44,12 @@ function createVoucherCard(data) {
       [_.createTable(['receipt-table'], tHeader, { rows })]
     ),
     _.createHeading('h6', paymentMethod, ['float-start']),
-    _.createHeading('h6', `Total ${totalCharge.toLocaleString()}ks`, [
+    _.createHeading('h6', `Total ${totalCharge.toLocaleString()}${currency}`, [
       'text-end',
     ]),
-    _.createHeading('h6', `Paid ${paid.toLocaleString()}ks`, ['text-end']),
+    _.createHeading('h6', `Paid ${paid.toLocaleString()}${currency}`, [
+      'text-end',
+    ]),
     _.createElement(
       '',
       '',

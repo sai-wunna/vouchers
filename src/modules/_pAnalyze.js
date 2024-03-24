@@ -15,7 +15,7 @@ export default () => {
     ['analyze-page-header'],
     [
       $analyzeDateHeading,
-      _.createElement('p', `Total Vouchers Recorded : ${vouchers.data.length}`),
+      _.createElement('p', `Total Vouchers Recorded : ${vouchers.length}`),
       _.createElement('p', `Total Customers Recorded : ${customers.length}`),
     ]
   )
@@ -147,8 +147,8 @@ export default () => {
 
   async function __setUpFunc() {
     $analyzeDateHeading.textContent = `Data From ${
-      vouchers.data[vouchers.data.length - 1]?.createdOn || '-----'
-    } to ${vouchers.data[0]?.createdOn || '-----'}`
+      vouchers[vouchers.length - 1]?.createdOn || '-----'
+    } to ${vouchers[0]?.createdOn || '-----'}`
     _.on('click', $salesListTables, handleClickOnTables)
     await appendTableData()
   }

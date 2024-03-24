@@ -2,7 +2,6 @@ function convertToGoodInfoData(typeNodes, amountNodes, rateNodes, chargeNodes) {
   const goodInfo = []
   let totalAmount = 0
   let totalCharge = 0
-
   typeNodes.forEach((typeNode, index) => {
     const charge = Number(chargeNodes[index].value)
     totalCharge += charge
@@ -11,7 +10,7 @@ function convertToGoodInfoData(typeNodes, amountNodes, rateNodes, chargeNodes) {
     totalAmount += Number(amount.split('vis')[0])
 
     goodInfo.push({
-      type: typeNode.value.toLowerCase().split(' ').join('/'),
+      type: typeNode.value,
       rate: Number(rateNodes[index].value),
       amount,
       charge,

@@ -25,6 +25,7 @@ class Notify {
     outOfDataForChart: 'No enough data to build chart',
     chartForPcOnly: 'Only Work In large Screen',
     sameGoodTypeAdded: 'Same Good Type Added !!',
+    alreadyExisted: 'Already Existed',
   }
 
   #countLimit = 3

@@ -143,7 +143,7 @@ function configChartBox(__whenUpdate) {
     $chartBorderWidthIp.value = borderWidth
     $chartTensionIp.value = tension * 10
     $chartPointSizeIp.value = pointRadius
-    // set realtime config data
+
     _.on('change', $chartTypeSelect, handleTypeSelect)
     _.on('change', $chartFillIp, handleFillCheck)
     _.on('change', $chartBorderWidthIp, handleBorderWidthChange)

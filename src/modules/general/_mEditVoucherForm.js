@@ -4,7 +4,13 @@ import _ from '../dom/index.js'
 import convertToGoodInfoData from '../helpers/convertToGoodInfoData.js'
 import { createModal } from '../helpers/createModal.js'
 import notifier from '../notify.js'
-import { deleteVoucher, updateVoucher, state } from '../state.js'
+import {
+  deleteVoucher,
+  updateVoucher,
+  state,
+  goodTypeShortKeyToLabel,
+  paymentMethods,
+} from '../state.js'
 import { getFormatDate } from '../helpers/getDate.js'
 import lockBtn from '../helpers/lockBtn.js'
 
@@ -61,7 +67,7 @@ export default function createEditVoucherForm(
 
   let boxNumber = 0
   const boxEvtCleaners = []
-  const addedGoodTypes = { 'b/r/n': false, 'b/r/wn': false, 'w/r/n': false } // it depends mustupdate mustupdate mustupdate
+  const addedGoodTypes = {}
 
   const $addGoodInfoBoxBtn = _.createButton('Add', ['btn', 'btn-blue', 'mx-1'])
   function handleAddBox() {
@@ -93,20 +99,16 @@ export default function createEditVoucherForm(
     addedGoodTypes[type] = false
   }
 
-  const $typeSelect = _.createSelect(['good-type-select', 'form-select'], '', [
-    {
-      value: 'b/r/n',
-      text: 'B R N',
-    },
-    {
-      value: 'b/r/wn',
-      text: 'B R WN',
-    },
-    {
-      value: 'w/r/n',
-      text: 'W R N',
-    },
-  ])
+  const $typeSelect = _.createSelect(
+    ['good-type-select', 'form-select'],
+    '',
+    []
+  )
+
+  for (const [k, v] of Object.entries(goodTypeShortKeyToLabel)) {
+    addedGoodTypes[k] = 0
+    _.createOption($typeSelect, k, v)
+  }
 
   function createGoodInfoBox(
     type = 'b/r/n',
@@ -116,13 +118,18 @@ export default function createEditVoucherForm(
   ) {
     const $boxNo = _.createSpan(`NO . ${boxNumber}`, ['good-box-no'])
     // type
-    const $type = _.createInput('', ['form-control', 'good-type'], '', {
-      value: type
-        .split('/')
-        .map((str) => `${str.toUpperCase()}`)
-        .join(' '),
-      disabled: true,
-    })
+    const $lockedTypeSelect = _.createSelect(
+      ['good-type-ip', 'form-select'],
+      '',
+      [
+        {
+          value: type,
+          text: goodTypeShortKeyToLabel[type],
+          selected: true,
+        },
+      ]
+    )
+    $lockedTypeSelect.disabled = true
 
     function handleChange() {
       const amount = Number($amountIp.value.split(/[ -]/)[0])
@@ -137,7 +144,7 @@ export default function createEditVoucherForm(
       '',
       {
         value: amount,
-        placeHolder: '10-vis or 10 p ( Please leave blank or hyphen )',
+        placeHolder: '10-vis or 10 piece',
       },
       'change',
       handleChange,
@@ -168,7 +175,7 @@ export default function createEditVoucherForm(
       '',
       '',
       ['good-info-box'],
-      [$boxNo, $type, $amountIp, $rateIp, $chargeIp]
+      [$boxNo, $lockedTypeSelect, $amountIp, $rateIp, $chargeIp]
     )
   }
 
@@ -187,16 +194,7 @@ export default function createEditVoucherForm(
   const $methodSelect = _.createSelect(
     ['form-select'],
     '',
-    [
-      { value: 'cash', text: 'Cash' },
-      { value: 'kbz-pay', text: 'KBZ Pay' },
-      { value: 'kbz-bank', text: 'KBZ Bank' },
-      { value: 'aya-pay', text: 'Aya Pay' },
-      { value: 'aya-bank', text: 'AYA Bank' },
-      { value: 'cb-pay', text: 'CB Pay' },
-      { value: 'cb-bank', text: 'CB Bank' },
-      { value: 'semi-payment', text: 'Some cash, some with banking' },
-    ],
+    [],
     'edit_vc_method'
   )
 
@@ -226,7 +224,7 @@ export default function createEditVoucherForm(
       const paid = Number($paidIp.value)
       const cancelled = $cancelCheckBox.checked
       const [totalAmount, totalCharge, goodInfo] = await convertToGoodInfoData(
-        _.getAllNodes('.good-type'),
+        _.getAllNodes('.good-type-ip'),
         _.getAllNodes('.good-amount-ip'),
         _.getAllNodes('.good-rate-ip'),
         _.getAllNodes('.good-charge-ip')
@@ -308,13 +306,23 @@ export default function createEditVoucherForm(
       cleaner2()
       addedGoodTypes[type] = false
     }
+    _.emptyChild($methodSelect)
     _.emptyChild($goodInfoBoxWrapper)
   }
 
   function __setUpFunc(data) {
     voucherInfo = data
     //setup header
-    const { id, goodInfo, paid, createdOn, note, cancelled, name } = data
+    const {
+      id,
+      goodInfo,
+      paid,
+      createdOn,
+      note,
+      cancelled,
+      name,
+      paymentMethod,
+    } = data
     $voucherId.textContent = `vid-${id}`
     $customerName.textContent = name
     $createdOn.textContent = createdOn
@@ -330,6 +338,13 @@ export default function createEditVoucherForm(
         await createGoodInfoBox(type, amount, rate, charge)
       )
     })
+
+    for (const singleMethod of paymentMethods) {
+      const { shortKey, method } = singleMethod
+      const selectedMethod = paymentMethod === method
+      _.createOption($methodSelect, shortKey, method, '', selectedMethod)
+    }
+
     //setup footer
     $cancelCheckBox.checked = cancelled
     $paidIp.value = paid

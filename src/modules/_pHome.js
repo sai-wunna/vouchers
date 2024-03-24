@@ -30,19 +30,19 @@ export default () => {
     addVoucherForm(__whenCreateNewVoucher)
 
   function __whenCreateNewVoucher() {
-    const voucher = vouchers.data[0]
+    const voucher = vouchers[0]
 
     if ($voucherInfoTableBody.childElementCount === 20) {
       $voucherInfoTableBody.lastChild.remove()
     }
 
-    if (vouchers.currentPage === 0) {
+    if (state.voucherCurrentPage === 0) {
       $voucherInfoTableBody.insertBefore(
         createVoucherRows([voucher]),
         $voucherInfoTableBody.firstChild
       )
     } else {
-      const vcData = vouchers.data[vouchers.currentPage * 20]
+      const vcData = vouchers[state.voucherCurrentPage * 20]
       $voucherInfoTableBody.insertBefore(
         createVoucherRows([vcData]),
         $voucherInfoTableBody.firstChild
@@ -55,14 +55,14 @@ export default () => {
   const $toPrevPageBtn = _.createButton('←', ['back-btn', 'mx-1'])
   async function handlePageChangePrev(e) {
     notifier.__start('Loading . . .')
-    const data = vouchers.data.slice(
-      (vouchers.currentPage - 1) * 20,
-      vouchers.currentPage * 20
+    const data = vouchers.slice(
+      (state.voucherCurrentPage - 1) * 20,
+      state.voucherCurrentPage * 20
     )
     if (data.length > 0) {
       ih_handlePageChange(data)
 
-      vouchers.currentPage -= 1
+      state.voucherCurrentPage -= 1
       $toNextPageBtn.disabled = false
     } else {
       lockBtn(e.target, 5000)
@@ -73,14 +73,14 @@ export default () => {
   const $toNextPageBtn = _.createButton('→', ['forth-btn'])
   async function handlePageChangeNext(e) {
     notifier.__start('Loading . . .')
-    const data = vouchers.data.slice(
-      (vouchers.currentPage + 1) * 20,
-      (vouchers.currentPage + 2) * 20
+    const data = vouchers.slice(
+      (state.voucherCurrentPage + 1) * 20,
+      (state.voucherCurrentPage + 2) * 20
     )
     if (data.length > 0) {
       ih_handlePageChange(data, true)
 
-      vouchers.currentPage += 1
+      state.voucherCurrentPage += 1
       $toPrevPageBtn.disabled = false
     } else {
       lockBtn(e.target, 5000)
@@ -100,14 +100,14 @@ export default () => {
     $voucherInfoTableBody.appendChild($pageNode)
     // set titles
     $timePeriodHeader.textContent = title
-    $currentPageInfo.textContent = `P - ${vouchers.currentPage + 1} / ${
-      Math.ceil(vouchers.data.length / 20) || 1
+    $currentPageInfo.textContent = `P - ${state.voucherCurrentPage + 1} / ${
+      Math.ceil(vouchers.length / 20) || 1
     } ( ${$voucherInfoTableBody.childElementCount} )`
 
     notifier.__end('Page Has been loaded', 'success')
     window.scrollTo({ top: 0, behavior: 'smooth' })
 
-    if (vouchers.currentPage > 3) {
+    if (state.voucherCurrentPage > 3) {
       if ($toFirstPageBtn.classList.contains('d-none')) {
         $toFirstPageBtn.classList.remove('d-none')
       }
@@ -125,13 +125,13 @@ export default () => {
   function handlePageChangeToFirstOne() {
     notifier.__start('Loading . . .')
 
-    ih_handlePageChange(vouchers.data.slice(0, 20))
+    ih_handlePageChange(vouchers.slice(0, 20))
 
-    vouchers.currentPage = 0
+    state.voucherCurrentPage = 0
     $toPrevPageBtn.disabled = true
   }
 
-  const $currentPageInfo = _.createHeading('h6')
+  const $currentPageInfo = _.createSpan()
   const $pageControllers = _.createElement(
     '',
     '',
@@ -182,8 +182,8 @@ export default () => {
   }
 
   function ih_updateCurrentPageInfo() {
-    $currentPageInfo.textContent = `P - ${vouchers.currentPage + 1} / ${
-      Math.ceil(vouchers.data.length / 20) || 1
+    $currentPageInfo.textContent = `P - ${state.voucherCurrentPage + 1} / ${
+      Math.ceil(vouchers.length / 20) || 1
     } ( ${$voucherInfoTableBody.childElementCount} )`
 
     const formatDate = getFormatDate()
@@ -198,7 +198,7 @@ export default () => {
     createEditVoucherForm(__whenDeleteVoucher, __whenUpdateVoucher)
 
   function __whenDeleteVoucher() {
-    const vcData = vouchers.data[(vouchers.currentPage + 1) * 20 - 1]
+    const vcData = vouchers[(state.voucherCurrentPage + 1) * 20 - 1]
 
     if (vcData) {
       $voucherInfoTableBody.appendChild(createVoucherRows([vcData]))
@@ -266,9 +266,9 @@ export default () => {
     _.on('click', $voucherInfoTableBody, handleClickOnInfoWrapper)
     _.on('click', $openAddFormModalBtn, handleAddFormModal)
     await ih_handlePageChange(
-      vouchers.data.slice(
-        vouchers.currentPage * 20,
-        (vouchers.currentPage + 1) * 20
+      vouchers.slice(
+        state.voucherCurrentPage * 20,
+        (state.voucherCurrentPage + 1) * 20
       )
     )
   }

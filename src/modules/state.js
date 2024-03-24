@@ -1,47 +1,29 @@
-// data.json : { customers : [], vouchers : [], chartConfig : {}  : chartBaseSetUp : {} }
-
-const monthNames = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'April',
-  'May',
-  'June',
-  'July',
-  'Aug',
-  'Sept',
-  'Oct',
-  'Nov',
-  'Dec',
-]
-
-const goodTypes = ['b/r/n', 'b/r/wn', 'w/r/n'] // mustupdate
-const goodTypeToChartLabel = {
-  'b/r/n': 'Black Raw ( with shell )',
-  'b/r/wn': 'Black Raw ( without shell )',
-  'w/r/n': 'White Raw ( with shell )',
-}
-
-const baseSetupForChartDataSet = {
-  'b/r/n': {
-    borderColor: 'rgba(246, 255, 0, 0.7)',
-    backgroundColor: 'rgba(246, 255, 0, 0.7)',
-  },
-  'b/r/wn': {
-    borderColor: 'rgba(0, 60, 255, 0.7)',
-    backgroundColor: 'rgba(0, 60, 255, 0.7)',
-  },
-  'w/r/n': {
-    borderColor: 'rgba(255, 0, 0, 0.7)',
-    backgroundColor: 'rgba(255, 0, 0, 0.7)',
-  },
-}
-
-// private states done
+/* data.json
+ {
+    user :{},
+    customers : [],
+    vouchers : [],
+    chartConfig : {},
+    goodTypesData : [],
+    paymentMethods : [],
+    starToChargeRatio : 10000,
+  }
+*/
 
 const state = {
+  user: {
+    company: 'Test Company',
+    address: 'Far far away in the galaxy',
+    phone: '09-007-007-007, 09-231-231-231',
+    receiptThanks: 'Thanks For Your Choice',
+  },
+  appConfig: {
+    starToChargeRatio: 10,
+    currency: '$',
+  },
+  voucherCurrentPage: 0,
   sortCustomersBy: 'stars',
-  $editingVoucher: null,
+  $editingVoucher: null, // doc node
   importedFileData: {
     totalVouchers: 0,
     totalCustomers: 0,
@@ -62,21 +44,90 @@ const state = {
 const chartDataSets = {}
 const salesTableData = {}
 const customers = []
-const vouchers = {
-  currentPage: 0,
-  data: [],
-}
+const vouchers = []
 
-// const salesTableData = {}
-// const chartBaseSetUp = {}
-// const chartData = {}
+const goodTypesData = [
+  {
+    shortKey: 'KFC',
+    type: 'Fried Chicken',
+    borderColor: 'rgb(112, 97, 188)',
+    bgColor: 'rgba(112, 97, 188,0.6)',
+  },
+  {
+    shortKey: 'BB-tea',
+    type: 'Bubble Tea',
+    borderColor: 'rgb(206, 86, 86)',
+    bgColor: 'rgba(206, 86, 86,0.6)',
+  },
+  {
+    shortKey: 'Ch-Sandwich',
+    type: 'Cheese Sandwich',
+    borderColor: 'rgb(153, 154, 62)',
+    bgColor: 'rgba(153, 154, 62,0.6)',
+  },
+]
+
+const paymentMethods = [
+  { shortKey: 'Cash', method: 'Cash Only' },
+  { shortKey: 'Online Pay', method: 'Online pay' },
+  { shortKey: 'semi-payment', method: 'Some Cash and some with pay' },
+]
+
+const monthNames = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'April',
+  'May',
+  'June',
+  'July',
+  'Aug',
+  'Sept',
+  'Oct',
+  'Nov',
+  'Dec',
+]
+
+const goodTypes = []
+const goodTypeShortKeyToLabel = {}
+
+const baseSetupForChartDataSet = {}
+
+// ------ handle goodTypes setup start -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
+
+function setUpGoodTypesDatasets() {
+  // empty existed data
+  goodTypes.splice(0, goodTypes.length)
+  for (const key in goodTypeShortKeyToLabel) {
+    delete goodTypeShortKeyToLabel[key]
+  }
+  for (const key in baseSetupForChartDataSet) {
+    delete baseSetupForChartDataSet[key]
+  }
+
+  goodTypesData.forEach((typeInfo) => {
+    const { type, shortKey, borderColor, bgColor } = typeInfo
+
+    goodTypes.push(shortKey)
+    goodTypeShortKeyToLabel[shortKey] = type
+
+    baseSetupForChartDataSet[shortKey] = {
+      borderColor,
+      backgroundColor: bgColor,
+    }
+  })
+}
+// temporary
+setUpGoodTypesDatasets()
+
+// ------ handle goodTypes setup end -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
 
 // ------- handle vouchers start -/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-//
 
 async function saveNewVoucher(data, totalCharge) {
-  const id = vouchers.data.length + 1
+  const id = vouchers.length + 1
   const newVoucher = { id, ...data }
-  vouchers.data.unshift(newVoucher)
+  vouchers.unshift(newVoucher)
 
   await updateStarsOfCustomerOnCreateNewVoucher(data.customerId, totalCharge)
   await updateSalesTableDataWhenCreateNewVoucher(data, totalCharge)
@@ -85,24 +136,24 @@ async function saveNewVoucher(data, totalCharge) {
 }
 // helper of upper one |
 function updateStarsOfCustomerOnCreateNewVoucher(customerId, totalCharge) {
-  const stars = Math.round(totalCharge / 10000)
+  const stars = Math.round(totalCharge / state.appConfig.starToChargeRatio)
   const customerIdx = customers.findIndex((cus) => cus.id === customerId)
   customers[customerIdx].stars += stars
 }
 
 function getAVoucher(vid) {
-  const receipt = vouchers.data.find((vc) => vc.id === vid)
+  const receipt = vouchers.find((vc) => vc.id === vid)
   const customer = customers.find((cus) => cus.id === receipt.customerId)
   return { receipt: { ...receipt }, customer: { ...customer } }
 }
 
 async function updateVoucher(data, totalCharge) {
   const id = Number(data.id)
-  const idx = vouchers.data.findIndex((voucher) => voucher.id === id)
+  const idx = vouchers.findIndex((voucher) => voucher.id === id)
   if (idx === -1) {
     return false
   }
-  const oldData = { ...vouchers.data[idx] }
+  const oldData = { ...vouchers[idx] }
   const newData = {
     ...data,
     customerId: oldData.customerId,
@@ -110,7 +161,7 @@ async function updateVoucher(data, totalCharge) {
   }
 
   for (const [k, v] of Object.entries(data)) {
-    vouchers.data[idx][k] = v
+    vouchers[idx][k] = v
   }
 
   if (oldData.cancelled && newData.cancelled) {
@@ -137,10 +188,12 @@ function updateStarsOfCustomerOnUpdateVoucher(oldData, newData, totalCharge) {
 
   if (newData.cancelled !== oldData.cancelled) {
     if (newData.cancelled) {
-      const stars = Math.round(oldTotalCharge / 10000)
+      const stars = Math.round(
+        oldTotalCharge / state.appConfig.starToChargeRatio
+      )
       customer.stars -= stars
     } else {
-      const stars = Math.round(totalCharge / 10000)
+      const stars = Math.round(totalCharge / state.appConfig.starToChargeRatio)
       customer.stars += stars
     }
     return
@@ -148,19 +201,21 @@ function updateStarsOfCustomerOnUpdateVoucher(oldData, newData, totalCharge) {
 
   // math.round make conflict, so added this condition check
   if (oldTotalCharge !== totalCharge) {
-    const stars = Math.round((totalCharge - oldTotalCharge) / 10000)
+    const stars = Math.round(
+      (totalCharge - oldTotalCharge) / state.appConfig.starToChargeRatio
+    )
     customer.stars += stars
   }
 }
 
 async function deleteVoucher(vid) {
   const id = Number(vid)
-  const idx = vouchers.data.findIndex((voucher) => voucher.id === id)
+  const idx = vouchers.findIndex((voucher) => voucher.id === id)
   if (idx === -1) {
     return false
   }
-  const voucher = { ...vouchers.data[idx] }
-  vouchers.data.splice(idx, 1)
+  const voucher = { ...vouchers[idx] }
+  vouchers.splice(idx, 1)
   if (!voucher.cancelled) {
     await updateStarsOfCustomerOnDeleteVoucher(voucher)
     await updateSalesTableDataWhenDeleteVoucher(voucher)
@@ -177,7 +232,7 @@ function updateStarsOfCustomerOnDeleteVoucher(voucher) {
     (total, info) => total + info.charge,
     0
   )
-  const stars = Math.round(totalCharge / 10000)
+  const stars = Math.round(totalCharge / state.appConfig.starToChargeRatio)
   customers[customerIdx].stars -= stars
 }
 
@@ -210,7 +265,7 @@ function getACustomerInfo(id) {
 
 function getCustomerAndHisVouchersById(id) {
   const customerData = customers.find((cus) => cus.id === id)
-  const vouchersData = vouchers.data.filter((vc) => vc.customerId === id)
+  const vouchersData = vouchers.filter((vc) => vc.customerId === id)
   return { customerData, vouchersData }
 }
 
@@ -240,7 +295,7 @@ function updateCustomer(updatedData) {
   const customer = customers[idx]
 
   if (customer.name !== updatedData.name) {
-    vouchers.data.map((voucher) => {
+    vouchers.map((voucher) => {
       if (voucher.customerId === id) {
         voucher.name = updatedData.name
       }
@@ -270,7 +325,7 @@ function searchCustomer(query, type, limit = 10) {
 function deleteCustomer(cusId) {
   try {
     const id = Number(cusId)
-    const vouchersCount = vouchers.data.findIndex(
+    const vouchersCount = vouchers.findIndex(
       (voucher) => voucher.customerId === id
     )
     const idx = customers.findIndex((cus) => cus.id === id)
@@ -325,7 +380,10 @@ function updateSalesTableDataWhenCreateNewVoucher(data, totalCharge) {
       (existedTableData.total / thisYear.total) * 100
     )}%`
   } else {
-    const standardGoodInfo = { 'b/r/n': 0, 'b/r/wn': 0, 'w/r/n': 0 } // mustupdate mustupdate mustupdate
+    const standardGoodInfo = {}
+    goodTypes.forEach((type) => {
+      standardGoodInfo[type] = 0
+    })
 
     // store charge from newGoodInfo to standardGoodInfo
     for (const type in standardGoodInfo) {
@@ -531,14 +589,19 @@ function buildSalesTableData() {
     delete salesTableData[key]
   }
 
-  const thisYear = { 'b/r/n': 0, 'b/r/wn': 0, 'w/r/n': 0 } // mustupdate mustupdate mustupdate
+  const thisYear = {}
   let thisYearTotalCharge = 0
 
   let prevMonthName = ''
-  const currentMonth = { 'b/r/n': 0, 'b/r/wn': 0, 'w/r/n': 0 } // mustupdate mustupdate mustupdate
+  const currentMonth = {}
   let currentMonthTotalCharge = 0
 
-  vouchers.data.toReversed().forEach((voucher, index) => {
+  goodTypes.forEach((type) => {
+    thisYear[type] = 0
+    currentMonth[type] = 0
+  })
+
+  vouchers.toReversed().forEach((voucher, index) => {
     if (voucher.cancelled) return
 
     const month = monthNames[Number(voucher.createdOn.split('-')[1]) - 1]
@@ -570,7 +633,7 @@ function buildSalesTableData() {
       thisYearTotalCharge += charge
     })
 
-    if (index === vouchers.data.length - 1) {
+    if (index === vouchers.length - 1) {
       for (const [type, charge] of Object.entries(currentMonth)) {
         salesTableData[prevMonthName].goodInfo.push({
           type,
@@ -593,10 +656,11 @@ function buildSalesTableData() {
     total: thisYearTotalCharge,
     goodInfo: [
       ...Object.entries(thisYear).map(([type, charge]) => {
+        const percentage = Math.round((charge / thisYearTotalCharge) * 100)
         return {
           type,
           charge,
-          percentage: Math.round((charge / thisYearTotalCharge) * 100),
+          percentage: isNaN(percentage) ? 0 : percentage,
         }
       }),
     ],
@@ -761,7 +825,7 @@ function getChartData(period) {
   }
   const chartData = deepCopy(data)
   chartData.datasets.forEach((set, index) => {
-    set.label = goodTypeToChartLabel[set.label]
+    set.label = goodTypeShortKeyToLabel[set.label]
     chartData.datasets[index] = {
       ...set,
       ...state.chartConfig.datasetsConf,
@@ -785,16 +849,7 @@ function getDaysArray(dateStr) {
 }
 
 function buildMonthlyChartData() {
-  // const firstVoucher = vouchers.data[0]
-  // const lastVoucher = vouchers.data[vouchers.data.length - 1]
-  // const [y1, m1] = firstVoucher.createdOn.split('-').map((date) => Number(date))
-  // const [y2, m2] = lastVoucher.createdOn.split('-').map((date) => Number(date))
-
-  // if (y1 === y2 && m1 === m2) {
-  //   return {}
-  // }
-
-  const possibleDatasets = convertToMonthlyDataSets(vouchers.data.toReversed())
+  const possibleDatasets = convertToMonthlyDataSets(vouchers.toReversed())
 
   for (const [k, v] of Object.entries(possibleDatasets)) {
     chartDataSets[k] = buildMonthChartData(v)
@@ -805,11 +860,10 @@ function buildMonthlyChartData() {
 
 function buildMonthChartData(data) {
   const labels = getDaysArray(data[0].createdOn)
-  const altDatasets = {
-    'b/r/n': Array.from({ length: labels.length }, () => 0),
-    'b/r/wn': Array.from({ length: labels.length }, () => 0),
-    'w/r/n': Array.from({ length: labels.length }, () => 0),
-  } // depends on good types
+  const altDatasets = {}
+  goodTypes.forEach((type) => {
+    altDatasets[type] = Array.from({ length: labels.length }, () => 0)
+  })
 
   data.forEach((voucher) => {
     if (voucher.cancelled) {
@@ -817,26 +871,7 @@ function buildMonthChartData(data) {
     }
     const currentDay = Number(voucher.createdOn.split('-')[2]) - 1
     voucher.goodInfo.forEach((info) => {
-      if (info.type === 'b/r/n') {
-        if (altDatasets['b/r/n'][currentDay]) {
-          altDatasets['b/r/n'][currentDay] += info.charge
-        } else {
-          altDatasets['b/r/n'][currentDay] = info.charge
-        }
-      } else if (info.type === 'b/r/wn') {
-        if (altDatasets['b/r/wn'][currentDay]) {
-          altDatasets['b/r/wn'][currentDay] += info.charge
-        } else {
-          altDatasets['b/r/wn'][currentDay] = info.charge
-        }
-      } else {
-        if (altDatasets['w/r/n'][currentDay]) {
-          altDatasets['w/r/n'][currentDay] += info.charge
-        } else {
-          altDatasets['w/r/n'][currentDay] = info.charge
-        }
-      }
-      // depends on good types
+      altDatasets[info.type][currentDay] += info.charge
     })
   })
 
@@ -882,7 +917,7 @@ function buildCustomerChartData(vouchers) {
   const chartData = buildTotalChartData(vouchers)
 
   chartData.datasets.forEach((set, index) => {
-    set.label = goodTypeToChartLabel[set.label]
+    set.label = goodTypeShortKeyToLabel[set.label]
     chartData.datasets[index] = {
       ...set,
       ...state.chartConfig.datasetsConf,
@@ -901,7 +936,15 @@ function buildTotalChartData(vouchers) {
   }
 
   const possibleColumnsDataSet = buildTotalChartDataSet(vouchers.toReversed())
-  const altDatasets = { 'b/r/n': [], 'b/r/wn': [], 'w/r/n': [] } // depends on good types
+
+  const altDatasets = {}
+
+  goodTypes.forEach((type) => {
+    altDatasets[type] = Array.from(
+      { length: possibleColumnsDataSet.length },
+      () => 0
+    )
+  })
 
   possibleColumnsDataSet.forEach((dataSet, index) => {
     const labelIdx = Math.round(dataSet.length / 2)
@@ -914,25 +957,7 @@ function buildTotalChartData(vouchers) {
         return
       }
       voucher.goodInfo.forEach((info) => {
-        if (info.type === 'b/r/n') {
-          if (altDatasets['b/r/n'][index]) {
-            altDatasets['b/r/n'][index] += info.charge
-          } else {
-            altDatasets['b/r/n'][index] = info.charge
-          }
-        } else if (info.type === 'b/r/wn') {
-          if (altDatasets['b/r/wn'][index]) {
-            altDatasets['b/r/wn'][index] += info.charge
-          } else {
-            altDatasets['b/r/wn'][index] = info.charge
-          }
-        } else {
-          if (altDatasets['w/r/n'][index]) {
-            altDatasets['w/r/n'][index] += info.charge
-          } else {
-            altDatasets['w/r/n'][index] = info.charge
-          }
-        }
+        altDatasets[info.type][index] += info.charge
       })
     })
   })
@@ -960,7 +985,7 @@ function buildTotalChartDataSet(data) {
 }
 
 function buildForThisYearChartData() {
-  chartDataSets.thisYear = buildTotalChartData(vouchers.data)
+  chartDataSets.thisYear = buildTotalChartData(vouchers)
 }
 
 // build customer and total data chart end ---------------------------------
@@ -971,6 +996,11 @@ export {
   state,
   customers,
   vouchers,
+  // ----- setup
+  goodTypesData,
+  paymentMethods,
+  goodTypeShortKeyToLabel,
+  setUpGoodTypesDatasets,
   // ----- voucher
   getAVoucher,
   saveNewVoucher,

@@ -2,7 +2,13 @@
 
 import _ from '../dom/index.js'
 import notifier from '../notify.js'
-import { vouchers, customers } from '../state.js'
+import {
+  vouchers,
+  customers,
+  paymentMethods,
+  goodTypesData,
+  state,
+} from '../state.js'
 import { getDayName, getFormatDate } from '../helpers/getDate.js'
 import lockBtn from '../helpers/lockBtn.js'
 
@@ -10,7 +16,7 @@ export default () => {
   const $currentDataHeading = _.createHeading('h3', 'Current Data')
   const $cdTotalVouchers = _.createElement(
     'p',
-    `Total Vouchers Recorded : ${vouchers.data.length}`
+    `Total Vouchers Recorded : ${vouchers.length}`
   )
   const $cdTotalCustomers = _.createElement(
     'p',
@@ -37,13 +43,19 @@ export default () => {
     try {
       notifier.__start('Building Data', 'info')
       const data = {
-        vouchers: vouchers.data,
+        user: state.user,
+        vouchers,
         customers,
+        paymentMethods,
+        goodTypesData,
+        chartConfig: state.chartConfig,
+        starToChargeRatio: state.starToChargeRatio,
+        // user : state.user,
         version: `${getFormatDate()
           .split('-')
           .join('')}-${getDayName()}-${new Date().getTime()}`,
-        timePeriod: `From ${vouchers.data[0].createdOn} To ${
-          vouchers.data[vouchers.data.length - 1].createdOn
+        timePeriod: `From ${vouchers[0].createdOn} To ${
+          vouchers[vouchers.length - 1].createdOn
         }`,
       }
       const jsonString = JSON.stringify(data)
@@ -92,7 +104,7 @@ export default () => {
 
   function __setUpFunc() {
     $cdTimePeriod.textContent = `From ${
-      vouchers.data[vouchers.data.length - 1]?.createdOn || '---'
+      vouchers[vouchers.length - 1]?.createdOn || '---'
     } To ${getFormatDate()}`
     _.on('click', $downloadBtn, handleDownload)
   }

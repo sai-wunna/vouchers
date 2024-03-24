@@ -349,7 +349,7 @@ class Doc {
     if (title) {
       $anchor.title = title
     }
-    if (text === 'object') {
+    if (typeof text === 'object') {
       $anchor.appendChild(text)
     } else {
       $anchor.textContent = text || 'Link'

@@ -8,10 +8,16 @@ import {
   buildSalesTableData,
   buildMonthlyChartData,
   buildForThisYearChartData,
+  setUpGoodTypesDatasets,
+  goodTypesData,
+  paymentMethods,
 } from './state.js'
 import notifier from './notify.js'
-import downloadBox from './fileManager/_cDownloadBox.js'
+import downloadBox from './setting/_cDownloadBox.js'
 import lockBtn from './helpers/lockBtn.js'
+import setUpPage from './setting/_spSetup.js'
+import appendCustomStyles from './helpers/appendCustomStyles.js'
+import _ncHowTo from './setting/_ncHowTo.js'
 
 export default () => {
   const {
@@ -53,7 +59,7 @@ export default () => {
   const $fileIpLabel = _.createLabel('No File Selected', 'import_file_input', [
     'file-input-label',
   ])
-  const $fileInput = _.createInput('file', ['file-input'])
+  const $fileInput = _.createInput('file', ['file-input'], 'import_file_input')
   function handleFileChange(e) {
     const file = e.target.files[0]
     if (!file) return notifier.on('jsonFileOnly', 'warning')
@@ -68,12 +74,23 @@ export default () => {
       try {
         const data = JSON.parse(fileContent)
         if (
-          !(data.customers || data.vouchers || data.version || data.timePeriod)
+          !(
+            data.customers &&
+            data.vouchers &&
+            data.version &&
+            data.timePeriod &&
+            data.chartConfig &&
+            data.goodTypesData &&
+            data.paymentMethods &&
+            data.appConfig &&
+            data.user
+          )
         ) {
           notifier.on('jsonFileOnly', 'warning')
           return
         }
         fileData = { ...data }
+
         $ifTotalVouchers.textContent = `Total Vouchers Recorded : ${data.vouchers.length}`
         $ifTotalCustomers.textContent = `Total Customers Recorded : ${data.customers.length}`
         $ifTimePeriod.textContent = data.timePeriod
@@ -105,15 +122,27 @@ export default () => {
       state.importedFileData.totalCustomers = fileData.customers.length
       state.importedFileData.timePeriod = fileData.timePeriod
       state.importedFileData.version = fileData.version
+      state.appConfig = { ...fileData.appConfig }
+      state.user = { ...fileData.user }
+      state.chartConfig = { ...fileData.chartConfig }
 
-      vouchers.data.splice(0, vouchers.data.length, ...fileData.vouchers)
+      vouchers.splice(0, vouchers.length, ...fileData.vouchers)
       customers.splice(0, customers.length, ...fileData.customers)
+      goodTypesData.splice(0, goodTypesData.length, ...fileData.goodTypesData)
+      paymentMethods.splice(
+        0,
+        paymentMethods.length,
+        ...fileData.paymentMethods
+      )
 
+      await setUpGoodTypesDatasets()
       await buildForThisYearChartData()
       await buildSalesTableData()
       await buildMonthlyChartData()
+      appendCustomStyles(goodTypesData)
+      state.voucherCurrentPage = 0
 
-      vouchers.currentPage = 0
+      await __cleanupSetUpAppPage() // to refresh memo
       notifier.__end('Ready', 'info')
     } catch (error) {
       notifier.__end('Something Went Wrong', 'error')
@@ -135,16 +164,41 @@ export default () => {
 
   const [$downloadBox, __setUpDownloadBox, __cleanUpDownloadBox] = downloadBox()
   let downloadBoxAppended = false
+
+  const $toSetUpPageBtn = _.createButton('Set Up', ['forth-btn'])
+
+  async function handleToSetupPageBtn() {
+    $fileManager.classList.add('d-none')
+    $setUpAppPage.classList.remove('d-none')
+    await __setUpSetupAppPage()
+  }
+
+  const [$setUpAppPage, __setUpSetupAppPage, __cleanupSetUpAppPage] = setUpPage(
+    __whenBackToFileManager
+  )
+
+  function __whenBackToFileManager() {
+    $fileManager.classList.remove('d-none')
+  }
+
+  const $howToUseBox = _ncHowTo()
+  const $fileManager = _.createElement(
+    '',
+    '',
+    ['file-manager'],
+    [$toSetUpPageBtn, $exceptedFileVersion, $importedFileDataBox, $howToUseBox]
+  )
+
   const $main = _.createElement(
     '',
     '',
-    ['file-page'],
-    [$exceptedFileVersion, $importedFileDataBox]
+    ['setting-page'],
+    [$fileManager, $setUpAppPage]
   )
 
   async function __setUpFunc() {
-    if (vouchers.data.length > 0 || customers.length > 0) {
-      $main.appendChild($downloadBox)
+    if (vouchers.length > 0 || customers.length > 0) {
+      $fileManager.insertBefore($downloadBox, $fileManager.children[1])
       await __setUpDownloadBox()
       downloadBoxAppended = true
     }
@@ -153,14 +207,18 @@ export default () => {
     }
     _.on('change', $fileInput, handleFileChange)
     _.on('click', $confirmBtn, handleConfirm)
+    _.on('click', $toSetUpPageBtn, handleToSetupPageBtn)
   }
 
   async function __cleanUpFunc() {
-    _.on('change', $fileInput, handleFileChange)
-    _.on('click', $confirmBtn, handleConfirm)
+    fileData = null
+    _.removeOn('change', $fileInput, handleFileChange)
+    _.removeOn('click', $confirmBtn, handleConfirm)
+    _.removeOn('click', $toSetUpPageBtn, handleToSetupPageBtn)
     if (downloadBoxAppended) {
       await __cleanUpDownloadBox()
     }
+    await __cleanupSetUpAppPage()
   }
 
   return [$main, __setUpFunc, __cleanUpFunc]

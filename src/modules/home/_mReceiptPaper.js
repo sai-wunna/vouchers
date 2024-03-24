@@ -6,8 +6,13 @@ import {
   tHeader,
   convertToTBDataNTotalAmount,
 } from '../helpers/receiptTBodyDataParser.js'
+import { state } from '../state.js'
 
 export default () => {
+  const {
+    user: { company, phone, address, receiptThanks },
+    appConfig: { currency },
+  } = state
   // header
   const $vid = _.createElement('small', '', ['float-end'])
   const $receiptHeader = _.createElement(
@@ -16,10 +21,10 @@ export default () => {
     ['receipt-header'],
     [
       $vid,
-      _.createHeading('h2', 'Hello World'),
-      _.createElement('small', 'Pakokku, No 11, 16th street, Myanmar'),
+      _.createHeading('h2', company),
+      _.createElement('small', address),
       _.createElement('br'),
-      _.createElement('small', '09-123-123-123, 09-321-321-321'),
+      _.createElement('small', phone),
       _.createElement('br'),
     ]
   )
@@ -45,7 +50,7 @@ export default () => {
 
   // footer
   // here note box -----
-  const $logo = _.createHeading('h4', 'LoGo')
+  const $noteToggler = _.createHeading('h4', 'Note')
   const $note = _.createSpan()
   const $updatedDate = _.createNode('i')
   const $secretBox = _.createElement(
@@ -74,7 +79,7 @@ export default () => {
         '',
         ['receipt-summary'],
         [
-          $logo,
+          $noteToggler,
           _.createElement(
             '',
             '',
@@ -84,7 +89,7 @@ export default () => {
         ]
       ),
       $secretBox,
-      _.createElement('', 'Thanks For Your Choice', ['receipt-thanks']),
+      _.createElement('', receiptThanks, ['receipt-thanks']),
     ]
   )
 
@@ -98,7 +103,7 @@ export default () => {
   const [$main, __cleanUpModal] = createModal($box, __sleepFunc)
 
   function __sleepFunc() {
-    _.removeOn('click', $logo, toggleSecretBox)
+    _.removeOn('click', $noteToggler, toggleSecretBox)
   }
 
   function __setUpFunc(customer, receipt) {
@@ -119,13 +124,13 @@ export default () => {
     const $tableBody = _.createTBody('', rows)
     $receiptTable.lastChild.replaceWith($tableBody)
     // set footer
-    $totalChargeHeader.textContent = `Total ${totalCharge.toLocaleString()}ks`
-    $totalPaidHeader.textContent = `Paid ${paid.toLocaleString()}ks`
+    $totalChargeHeader.textContent = `Total ${totalCharge.toLocaleString()}${currency}`
+    $totalPaidHeader.textContent = `Paid ${paid.toLocaleString()}${currency}`
     $note.textContent = `${note ? `Note - ${note}` : 'No Notes !!!'}`
     $updatedDate.textContent = `${
       updatedOn ? `This Voucher was updated on ${updatedOn}` : ''
     }`
-    _.on('click', $logo, toggleSecretBox)
+    _.on('click', $noteToggler, toggleSecretBox)
   }
 
   function __cleanUpFunc() {

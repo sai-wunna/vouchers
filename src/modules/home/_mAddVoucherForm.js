@@ -1,6 +1,12 @@
 'use strict'
 
-import { saveNewCustomer, saveNewVoucher, searchCustomer } from '../state.js'
+import {
+  saveNewCustomer,
+  saveNewVoucher,
+  searchCustomer,
+  goodTypeShortKeyToLabel,
+  paymentMethods,
+} from '../state.js'
 import _ from '../dom/index.js'
 import notifier from '../notify.js'
 import { createModal } from '../helpers/createModal.js'
@@ -110,41 +116,26 @@ export default (__whenCreateNewVoucher) => {
   const $methodLb = _.createLabel('Payment Method', 'add_vc_method', [
     'form-label',
   ])
-  const $methodSelect = _.createSelect(
-    ['form-select'],
-    '',
-    [
-      { value: 'cash', text: 'Cash' },
-      { value: 'kbz-pay', text: 'KBZ Pay' },
-      { value: 'kbz-bank', text: 'KBZ Bank' },
-      { value: 'aya-pay', text: 'Aya Pay' },
-      { value: 'aya-bank', text: 'AYA Bank' },
-      { value: 'cb-pay', text: 'CB Pay' },
-      { value: 'cb-bank', text: 'CB Bank' },
-      { value: 'semi-payment', text: 'Some cash, some with banking' },
-    ],
-    'add_vc_method'
-  )
+  const $methodSelect = _.createSelect(['form-select'], '', [], 'add_vc_method')
+  for (const paymentMethod of paymentMethods) {
+    _.createOption($methodSelect, paymentMethod.shortKey, paymentMethod.method)
+  }
 
   // goods info box
   let boxNumber = 0
   const boxEvtCleaners = []
-  const addedGoodTypes = { 'b/r/n': false, 'b/r/wn': false, 'w/r/n': false } // it depends mustupdate mustupdate mustupdate
+  const addedGoodTypes = {}
 
-  const $typeSelect = _.createSelect(['good-type-select', 'form-select'], '', [
-    {
-      value: 'b/r/n',
-      text: 'B R N',
-    },
-    {
-      value: 'b/r/wn',
-      text: 'B R WN',
-    },
-    {
-      value: 'w/r/n',
-      text: 'W R N',
-    },
-  ]) // it depends mustupdate mustupdate mustupdate
+  const $typeSelect = _.createSelect(
+    ['good-type-select', 'form-select'],
+    '',
+    []
+  )
+
+  for (const [k, v] of Object.entries(goodTypeShortKeyToLabel)) {
+    addedGoodTypes[k] = 0
+    _.createOption($typeSelect, k, v)
+  }
 
   const $addGoodInfoBoxBtn = _.createButton('Add', ['btn', 'btn-blue', 'mx-1'])
 
@@ -192,17 +183,25 @@ export default (__whenCreateNewVoucher) => {
       $chargeIp.value = amount * rate
     }
 
-    const $type = _.createInput('', ['form-control', 'good-type-Ip'], '', {
-      value: goodType.toUpperCase().split('/').join(' '),
-      disabled: true,
-    })
+    const $lockedTypeSelect = _.createSelect(
+      ['good-type-ip', 'form-select'],
+      '',
+      [
+        {
+          value: goodType,
+          text: goodTypeShortKeyToLabel[goodType],
+          selected: true,
+        },
+      ]
+    )
+    $lockedTypeSelect.disabled = true
 
     // amount
     const [$amountIp, amountIpEvtCleaner] = _.createInput(
       '',
       ['form-control', 'good-amount-ip', 'my-1'],
       '',
-      { placeholder: '30-vis or 30 p ( must leave space or hyphen )' },
+      { placeholder: '30-vis or 30 piece' },
       'change',
       handleChange,
       true
@@ -232,7 +231,7 @@ export default (__whenCreateNewVoucher) => {
       '',
       '',
       ['good-info-box'],
-      [$boxNo, $type, $amountIp, $rateIp, $chargeIp]
+      [$boxNo, $lockedTypeSelect, $amountIp, $rateIp, $chargeIp]
     )
   }
 
@@ -284,7 +283,7 @@ export default (__whenCreateNewVoucher) => {
       const note = $noteTArea.value
       const paymentMethod = $methodSelect.value
       const [totalAmount, totalCharge, goodInfo] = convertToGoodInfoData(
-        _.getAllNodes('.good-type-Ip'),
+        _.getAllNodes('.good-type-ip'),
         _.getAllNodes('.good-amount-ip'),
         _.getAllNodes('.good-rate-ip'),
         _.getAllNodes('.good-charge-ip')

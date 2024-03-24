@@ -4,6 +4,7 @@ import _ from '../dom/index.js'
 import createConfigChartBox from './_cConfigChart.js'
 import { state, getChartData, salesTableData } from '../state.js'
 import { lockNav, unlockNav } from '../helpers/navLocker.js'
+import Chart from 'chart.js/auto'
 
 export default (__whenQuitSubPage) => {
   const { chartConfig } = state

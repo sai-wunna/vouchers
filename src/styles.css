@@ -266,6 +266,12 @@
   cursor: pointer;
 }
 
+.color-input {
+  padding: 0px;
+  outline: none;
+  border: none;
+}
+
 .form-control:focus {
   transform: scale(1.05, 1);
 }
@@ -366,17 +372,17 @@
 }
 
 .btn-blue {
-  background-color: rgb(64, 95, 189);
+  background-color: rgb(37, 80, 209);
   color: white;
 }
 
 .btn-orange {
-  background-color: rgb(206, 171, 74);
+  background-color: rgb(229, 181, 48);
   color: black;
 }
 
 .btn-red {
-  background-color: rgb(215, 70, 70);
+  background-color: rgb(231, 45, 45);
   color: white;
 }
 
@@ -408,6 +414,10 @@ button:disabled {
 
 .text-blue {
   color: blue;
+}
+
+.text-orange {
+  color: rgb(218, 150, 25);
 }
 
 /* notifier styling --------------- */
@@ -604,7 +614,7 @@ h1 {
 .home-page,
 .customer-page,
 .analyze-page,
-.file-page {
+.setting-page {
   padding: 1rem;
 }
 /* data-info page styling --------------------------------- start */
@@ -849,7 +859,7 @@ h1 {
 .receipt-thanks {
   border-top: 3px dashed;
   text-align: center;
-  margin: 0.5rem auto;
+  padding: 10px 0;
 }
 
 /* Customer Page styling -------------------------- */
@@ -943,7 +953,7 @@ h1 {
   display: block;
   cursor: pointer;
 }
-
+/* make it customizable too */
 .customer-voucher > span {
   background: linear-gradient(90deg, #86ff7b, transparent);
   border-left: 2px solid #0cb500;
@@ -1030,22 +1040,6 @@ h1 {
   margin: 0 5px 0 0;
 }
 
-.bar-amount:nth-child(3) > .bar-amt-indicator {
-  background-color: rgb(112, 97, 188);
-}
-
-.bar-amount:nth-child(4) > .bar-amt-indicator {
-  background-color: rgb(206, 86, 86);
-}
-
-.bar-amount:nth-child(5) > .bar-amt-indicator {
-  background-color: rgb(153, 154, 62);
-}
-
-.bar-amount:nth-child(6) > .bar-amt-indicator {
-  background-color: rgb(83, 178, 83);
-}
-
 .bar-amount-info {
   display: flex;
   width: 100%;
@@ -1058,14 +1052,13 @@ h1 {
 }
 
 .percentage-bar {
-  background-color: rgb(112, 97, 188);
   display: flex;
   justify-content: end;
   align-items: center;
   border-radius: 5px;
   overflow: hidden;
 }
-/* it depends on categories of products sales more categories - more nth child*/
+
 .bar-piece {
   padding: 6px;
 }
@@ -1073,22 +1066,6 @@ h1 {
 .bar-piece:last-child {
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
-}
-
-.bar-piece:nth-child(1) {
-  background-color: rgb(112, 97, 188);
-}
-
-.bar-piece:nth-child(2) {
-  background-color: rgb(206, 86, 86);
-}
-
-.bar-piece:nth-child(3) {
-  background-color: rgb(153, 154, 62);
-}
-
-.bar-piece:nth-child(4) {
-  background-color: rgb(83, 178, 83);
 }
 
 .chart-wrapper {
@@ -1125,11 +1102,12 @@ h1 {
 
 .file-import-box,
 .file-download-box {
-  padding: 0.5rem;
+  padding: 0 0 2rem 0;
   margin: 1rem 0;
+  position: relative;
 }
 
-.file-page h3 {
+.file-manager h3 {
   display: inline-block;
   padding: 10px 20px;
   color: white;
@@ -1138,9 +1116,104 @@ h1 {
   margin: 0.5rem 0;
 }
 
-.file-page h2 {
+.file-manager h2 {
   text-align: center;
   padding: 0.5rem 0;
+}
+
+/* set up sub page */
+
+.base-setup-sub-page h6 {
+  display: inline-block;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: #000000;
+  color: white;
+}
+
+.set-up-profile-box {
+  padding: 10px 0;
+  margin-bottom: 10px;
+}
+
+.app-config-box {
+  padding: 10px 0;
+}
+
+.set-up-profile-box .form-group,
+.app-config-box .form-group {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.set-up-profile-box .form-group .form-label {
+  width: 40%;
+}
+
+.good-type-info-row,
+.payment-method-info-row {
+  position: relative;
+  padding: 0.3rem 0.2rem;
+  margin: 0.5em 0;
+  border-bottom: 2px solid rgb(226, 226, 226);
+}
+
+.color-sample {
+  border-radius: 5px;
+  padding: 0 5px;
+  margin: 0 5px;
+}
+
+.good-type-info-row > div {
+  margin: 5px 0;
+}
+
+.add-goods-type-form,
+.add-payment-method-form {
+  border: 1px solid;
+  border-radius: 5px;
+  padding: 5px;
+  box-shadow: 0 2px 5px 2px rgba(0, 0, 0, 0.155);
+}
+
+/* how to use box */
+
+.how-to-use-box {
+  margin: 1rem 0;
+  padding: 1rem 0.5rem;
+}
+
+.how-to-use-box ul {
+  list-style: inside;
+}
+
+.how-to-use-box li::marker {
+  color: rgb(255, 89, 0);
+}
+
+.how-to-use-box p {
+  text-indent: 40px;
+}
+
+.contact-me-box {
+  margin-top: 4rem;
+  display: flex;
+  justify-content: center;
+}
+
+.contact-me-box a {
+  border: 2px solid rgb(92, 92, 92);
+  background-color: rgba(229, 229, 229, 0.565);
+  padding: 5px;
+  border-radius: 5px;
+  text-decoration: none;
+  color: rgb(210, 0, 0);
+  box-shadow: 2px 2px 0 0 black;
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.contact-me-box a:hover {
+  box-shadow: 5px 5px 0 0 black;
 }
 
 /* work in small screen */
@@ -1160,7 +1233,7 @@ h1 {
   .home-page,
   .customer-page,
   .analyze-page,
-  .file-page {
+  .setting-page {
     margin: 0.2rem 0;
     padding: 0.2rem;
   }

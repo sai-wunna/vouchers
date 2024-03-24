@@ -2,6 +2,7 @@
 
 import _ from '../dom/index.js'
 import { buildCustomerChartData, state } from '../state.js'
+import Chart from 'chart.js/auto'
 
 function createCustomerChart() {
   const $chart = _.createElement('canvas', '', [], [])

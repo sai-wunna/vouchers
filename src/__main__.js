@@ -4,16 +4,20 @@ import _ from './modules/dom/index.js'
 import notifier from './modules/notify.js'
 import $loadingPage from './modules/general/_ncLoadingPage.js'
 import './styles.css'
+import appendCustomStyles from './modules/helpers/appendCustomStyles.js'
+import { goodTypesData } from './modules/state.js'
 
 // --- ignite
 ;(() => {
+  appendCustomStyles(goodTypesData)
+  // set up place holder styles
   const $navigateToCustomers = _.getNodeById('toCustomers')
   const $navigateToAnalyze = _.getNodeById('toAnalyze')
   const $navigateToHome = _.getNodeById('toHome')
-  const $navigateToFileManager = _.getNodeById('toFileManager')
+  const $navigateToSetting = _.getNodeById('toSetting')
   const $pageWrapper = _.getNodeById('page_wrapper')
 
-  let currentRoute = 'home'
+  let currentRoute = 'setting'
   let cleanUpFunc = () => {}
   let navSpamBlocker = true
 
@@ -53,16 +57,16 @@ import './styles.css'
     updateTitle('Analyze')
   })
 
-  _.on('click', $navigateToFileManager, async (e) => {
+  _.on('click', $navigateToSetting, async (e) => {
     if (navSpamBlocker) return
-    if (currentRoute === 'file') return
+    if (currentRoute === 'setting') return
 
-    currentRoute = 'file'
+    currentRoute = 'setting'
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
 
     setActiveNav(e.target)
-    switchPage((await import('./modules/_pFileManager.js')).default)
-    updateTitle('File Manager')
+    switchPage((await import('./modules/_pSetting.js')).default)
+    updateTitle('Setting')
   })
 
   function setActiveNav($node) {
@@ -105,6 +109,6 @@ import './styles.css'
   ;(async () => {
     $pageWrapper.appendChild(_.createNode('br'))
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)
-    switchPage((await import('./modules/_pHome.js')).default)
+    switchPage((await import('./modules/_pSetting.js')).default)
   })()
 })()

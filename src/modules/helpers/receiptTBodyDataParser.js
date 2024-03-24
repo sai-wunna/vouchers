@@ -1,3 +1,5 @@
+import { goodTypeShortKeyToLabel } from '../state'
+
 const tHeader = {
   headers: [
     { text: 'Type' },
@@ -13,10 +15,14 @@ function convertToTBDataNTotalAmount(data = []) {
   data.forEach((row) => {
     const rowData = []
     for (const [k, v] of Object.entries(row)) {
+      let value = v
       if (k === 'charge') {
         totalCharge += Number(v)
       }
-      rowData.push({ text: isNaN(v) ? v : v.toLocaleString() })
+      if (k === 'type') {
+        value = goodTypeShortKeyToLabel[v]
+      }
+      rowData.push({ text: isNaN(value) ? value : value.toLocaleString() })
     }
     tBodyRows.push({ data: rowData })
   })

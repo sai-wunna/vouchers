@@ -48,7 +48,7 @@ function createEditCustomerForm(__whenDeleteCustomer, __whenUpdateCustomer) {
       await updateCustomer(customerInfo)
       await __whenUpdateCustomer()
 
-      lockNav(`${customerInfo.favorite ? '✨ ' : ''}${customerInfo.name}`)
+      lockNav(`${customerInfo.favorite ? '✔ ' : ''}${customerInfo.name}`)
       notifier.__end('Successfully Updated', 'success')
     } catch (error) {
       notifier.__end('Something went wrong', 'error')

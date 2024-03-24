@@ -208,7 +208,7 @@ function createCustomerDetail(__whenQuitFunc) {
     $editCustomerBtn.disabled = false
 
     if (customerInfo && customerInfo.id === id) {
-      lockNav(`${customerInfo.favorite ? '✨ ' : ''}${customerInfo.name}`, true)
+      lockNav(`${customerInfo.favorite ? '✔ ' : ''}${customerInfo.name}`, true)
       return
     }
 
@@ -242,7 +242,7 @@ function createCustomerDetail(__whenQuitFunc) {
       ioLoadedCount = 4
       intersectionObserver.observe($intersectionObserver)
 
-      lockNav(`${customerInfo.favorite ? '✨ ' : ''}${customerInfo.name}`, true)
+      lockNav(`${customerInfo.favorite ? '✔ ' : ''}${customerInfo.name}`, true)
 
       _.on('click', $editCustomerBtn, handleEditCustomerClick)
       _.on('click', $backToCustomersBtn, handleBackToCustomerPage)
