@@ -3,7 +3,7 @@
 import _ from '../dom/index.js'
 
 function createGoodTypeRow(shortKey, goodType, borderColor, bgColor) {
-  const $colorSample = _.createSpan('Color Sample', ['color-sample'])
+  const $colorSample = _.createSpan('', ['color-sample'])
   $colorSample.style.backgroundColor = bgColor
   $colorSample.style.border = `4px solid ${borderColor}`
   const $removeBtn = _.createButton('x', ['btn-corner-right', 'btn-ghost'])

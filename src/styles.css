@@ -376,11 +376,6 @@
   color: white;
 }
 
-.btn-orange {
-  background-color: rgb(229, 181, 48);
-  color: black;
-}
-
 .btn-red {
   background-color: rgb(231, 45, 45);
   color: white;
@@ -483,6 +478,7 @@ button:disabled {
   left: 50%;
   padding: 1rem;
   border-radius: 50%;
+  border: 4px dotted transparent;
   border-top: 4px dotted rgb(6, 0, 174);
   z-index: 10000;
   animation: inlineLoading 2s infinite;
@@ -758,21 +754,27 @@ h1 {
   width: 95%;
   padding: 10px 5px;
   border-radius: 10px;
-  background: radial-gradient(ellipse at top, #a5d392, #9bc689),
-    radial-gradient(ellipse at bottom, #ffeb3b, #ffeb3b);
+}
+
+.receipt-box,
+.customer-voucher,
+.receipt-bg-color-sample {
+  background-image: repeating-linear-gradient(
+    26deg,
+    rgba(255, 253, 253, 0.1),
+    rgba(255, 255, 255, 0.1) 4px,
+    transparent 0px,
+    transparent 8px
+  );
 }
 
 .receipt-header {
   padding: 0.3rem 0.6rem 0 0.6rem;
-  color: rgb(255, 60, 0);
+  color: rgb(236, 236, 236);
 }
 
 .receipt-header h2 {
   font-size: 1.5rem;
-}
-
-.receipt-header small {
-  color: initial;
 }
 
 .receipt-body {
@@ -845,7 +847,7 @@ h1 {
   background-color: rgb(245, 245, 245);
   display: block;
   padding: 0.2rem;
-  box-shadow: 0 1px 2px 1px rgba(255, 7, 7, 0.479);
+  box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.479);
   border-radius: 5px;
   margin: 0.5rem 0;
   transition: transform 0.3s ease-in-out;
@@ -945,7 +947,10 @@ h1 {
   padding: 10px 5px;
   margin: 0.4rem 0;
   position: relative;
-  background-color: rgb(239, 239, 239);
+}
+
+.customer-voucher h6 {
+  color: rgb(245, 245, 245);
 }
 
 .customer-voucher > span {
@@ -1123,6 +1128,14 @@ h1 {
 
 /* set up sub page */
 
+.setting-splitter {
+  padding: 3px;
+  border-radius: 5px;
+  background-color: #adadad;
+  box-shadow: 4px 4px 0 0 black;
+  margin: 10px 0;
+}
+
 .base-setup-sub-page h6 {
   display: inline-block;
   padding: 5px;
@@ -1138,6 +1151,23 @@ h1 {
 
 .app-config-box {
   padding: 10px 0;
+}
+
+.receipt-bg-theme-box {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 5px 0;
+}
+
+.receipt-bg-color-sample {
+  padding: 15px;
+  border-radius: 10px;
+  transition: transform 0.3s ease-in-out;
+}
+
+.active-receipt-bg-color {
+  transform: scale(1.3);
 }
 
 .set-up-profile-box .form-group,
@@ -1160,7 +1190,7 @@ h1 {
 
 .color-sample {
   border-radius: 5px;
-  padding: 0 5px;
+  padding: 0 10px;
   margin: 0 5px;
 }
 
@@ -1188,7 +1218,8 @@ h1 {
 }
 
 .how-to-use-box li::marker {
-  color: rgb(255, 89, 0);
+  color: rgb(240, 45, 14);
+  content: '<!> ';
 }
 
 .how-to-use-box p {
@@ -1203,11 +1234,10 @@ h1 {
 
 .contact-me-box a {
   border: 2px solid rgb(92, 92, 92);
-  background-color: rgba(229, 229, 229, 0.565);
   padding: 5px;
   border-radius: 5px;
   text-decoration: none;
-  color: rgb(210, 0, 0);
+  color: rgb(204, 0, 0);
   box-shadow: 2px 2px 0 0 black;
   transition: box-shadow 0.3s ease-in-out;
 }

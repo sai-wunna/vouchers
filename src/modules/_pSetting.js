@@ -139,7 +139,7 @@ export default () => {
       await buildForThisYearChartData()
       await buildSalesTableData()
       await buildMonthlyChartData()
-      appendCustomStyles(goodTypesData)
+      await appendCustomStyles(goodTypesData, state.appConfig.receiptBgColor)
       state.voucherCurrentPage = 0
 
       await __cleanupSetUpAppPage() // to refresh memo

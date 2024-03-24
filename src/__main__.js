@@ -1,9 +1,9 @@
 'use strict'
 
+import './styles.css'
 import _ from './modules/dom/index.js'
 import notifier from './modules/notify.js'
 import $loadingPage from './modules/general/_ncLoadingPage.js'
-import './styles.css'
 import appendCustomStyles from './modules/helpers/appendCustomStyles.js'
 import { goodTypesData } from './modules/state.js'
 
@@ -100,12 +100,11 @@ import { goodTypesData } from './modules/state.js'
     document.title = page
   }
 
-  // _.on('beforeunload', window, (e) => {
-  //   e.preventDefault()
-  //   e.returnValue = ''
-  //   return ''
-  // })
-
+  _.on('beforeunload', window, (e) => {
+    e.preventDefault()
+    e.returnValue = ''
+    return ''
+  })
   ;(async () => {
     $pageWrapper.appendChild(_.createNode('br'))
     $pageWrapper.replaceChild($loadingPage, $pageWrapper.firstChild)

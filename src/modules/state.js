@@ -1,12 +1,23 @@
 /* data.json
  {
-    user :{},
+    user :{
+      company: 'Test Company',
+      address: 'Far far away in the galaxy',
+      phone: '09-007-007-007, 09-231-231-231',
+      receiptThanks: 'Thanks For Your Choice'
+    },
+    appConfig: {
+      starToChargeRatio: 10,
+      currency: '$',
+      receiptBgColor: '#6d9c99',
+    },
     customers : [],
     vouchers : [],
     chartConfig : {},
     goodTypesData : [],
     paymentMethods : [],
-    starToChargeRatio : 10000,
+    version : '',
+    timePeriod : ''
   }
 */
 
@@ -20,15 +31,7 @@ const state = {
   appConfig: {
     starToChargeRatio: 10,
     currency: '$',
-  },
-  voucherCurrentPage: 0,
-  sortCustomersBy: 'stars',
-  $editingVoucher: null, // doc node
-  importedFileData: {
-    totalVouchers: 0,
-    totalCustomers: 0,
-    version: '',
-    timePeriod: '',
+    receiptBgColor: '#6d9c99',
   },
   chartConfig: {
     chartType: 'line',
@@ -38,6 +41,23 @@ const state = {
       pointRadius: 3,
       fill: 'origin',
     },
+  },
+  // under are standard assets
+  availableReceiptBgColors: [
+    '#729c6d',
+    '#6d859c',
+    '#9c6d6d',
+    '#6d9c99',
+    '#856d9c',
+  ],
+  voucherCurrentPage: 0,
+  sortCustomersBy: 'stars',
+  $editingVoucher: null, // doc node
+  importedFileData: {
+    totalVouchers: 0,
+    totalCustomers: 0,
+    version: '',
+    timePeriod: '',
   },
 }
 

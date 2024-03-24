@@ -22,6 +22,9 @@ export default () => {
         'This App is built to store vouchers and customers, then to track sales per month and period. Especially for small categories of Goods. No Server or internet connection is required. As offline app, user must store and reuse the .json file as database.'
       ),
       _.createList('ul', ['my-1'], '', [
+        {
+          text: 'In Set up page, if u change thing under the splitter line, u must click update button.',
+        },
         { text: 'Always Remember to Download Latest File' },
         { text: 'Always Set Up the latest file' },
         {

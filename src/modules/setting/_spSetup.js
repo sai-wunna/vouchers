@@ -9,6 +9,7 @@ import {
   buildSalesTableData,
   buildMonthlyChartData,
   buildForThisYearChartData,
+  state,
 } from '../state.js'
 import { lockNav, unlockNav } from '../helpers/navLocker.js'
 import {
@@ -38,7 +39,7 @@ export default (__whenBackToFileManager) => {
     unlockNav()
   }
 
-  const $splitter = _.createElement('hr', '', ['my-1'])
+  const $splitter = _.createElement('', '', ['setting-splitter'])
 
   const [$profileBox, __setUpProfileBox, __cleanUpProfileBox] = _cSetUpProfile()
 
@@ -171,7 +172,7 @@ export default (__whenBackToFileManager) => {
       await buildSalesTableData()
       await buildMonthlyChartData()
       await buildForThisYearChartData()
-      appendCustomStyles(goodTypesData)
+      appendCustomStyles(goodTypesData, state.appConfig.receiptBgColor)
 
       notifier.__end('Ready', 'success')
     } catch (error) {
@@ -184,14 +185,21 @@ export default (__whenBackToFileManager) => {
     '',
     '',
     ['set-up-wrapper'],
-    [$appConfBox, $setUpPaymentMethodsBox, $setUpGoodTypesDataBox, $updateBtn]
+    [
+      $profileBox,
+      $appConfBox,
+      $splitter,
+      $setUpPaymentMethodsBox,
+      $setUpGoodTypesDataBox,
+      $updateBtn,
+    ]
   )
 
   const $main = _.createElement(
     '',
     '',
     ['base-setup-sub-page', 'd-none'],
-    [$backBtn, $splitter, $profileBox, $setUpBox]
+    [$backBtn, $setUpBox]
   )
 
   function __sleepFunc() {
@@ -199,8 +207,6 @@ export default (__whenBackToFileManager) => {
     _.removeOn('click', $updateBtn, handleUpdate)
     _.removeOn('click', $paymentMethodRows, handleClickOnPaymentMethodRows)
     _.removeOn('click', $goodTypeRows, handleClickOnGoodTypesRows)
-    paymentMethodsClone.splice(0, paymentMethodsClone.length)
-    goodTypesData.splice(0, paymentMethodsClone.length)
 
     __cleanAppConfBox()
     __cleanUpAddGoodTypeForm()

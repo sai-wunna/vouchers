@@ -2,7 +2,7 @@
 
 import _ from '../dom/index.js'
 
-export default (goodTypesData) => {
+export default (goodTypesData, receiptBgColor) => {
   let result = `.percentage-bar { background-color : ${goodTypesData[0].borderColor} }`
 
   goodTypesData.forEach((type, index) => {
@@ -10,10 +10,12 @@ export default (goodTypesData) => {
       index + 3
     }) > .bar-amt-indicator { background-color : ${type.borderColor} }`
 
-    result += `.bar-piece:nth-child(${index + 2}) { background-color : ${
+    result += `.bar-piece:nth-child(${index + 1}) { background-color : ${
       type.borderColor
     } }`
   })
+
+  result += `.receipt-box, .customer-voucher { background-color : ${receiptBgColor} !important }`
 
   _.getNodeById('custom_styles').textContent = result
 }
