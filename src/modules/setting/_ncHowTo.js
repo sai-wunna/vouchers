@@ -16,7 +16,7 @@ export default () => {
     '',
     ['how-to-use-box'],
     [
-      _.createHeading('h6', 'How To Use', ['my-1']),
+      _.createHeading('h6', 'How To', ['my-1']),
       _.createElement(
         'p',
         'This App is built to store vouchers and customers, then to track sales per month and period. Especially for small categories of Goods. No Server or internet connection is required. As offline app, user must store and reuse the .json file as database.'
@@ -25,16 +25,19 @@ export default () => {
         {
           text: 'In Set up page, if u change thing under the splitter line, u must click update button.',
         },
-        { text: 'Always Remember to Download Latest File' },
-        { text: 'Always Set Up the latest file' },
+        { text: 'Always Remember to Download Latest File.' },
+        { text: 'Always Remember Set Up the Latest File.' },
         {
-          text: 'Star To Charge Ratio can only be updated when no voucher is created',
+          text: 'Star To Charge Ratio can only be updated when no voucher is created.',
         },
         {
-          text: 'Suitable goods types limit is around 5, too much types make chart messy',
+          text: 'Suitable goods types limit is around 5, too much types make chart messy.',
         },
         {
-          text: 'When remove Goods Type or payment methods, make sure that no voucher has used it. Later Error or data-loss ( in-app only ) may occur',
+          text: "If a voucher or more use a good Type, u can't remove it.",
+        },
+        {
+          text: 'Type the same short key to edit, otherwise new will be added.',
         },
       ]),
       _.createElement('', '', ['contact-me-box'], [$link]),

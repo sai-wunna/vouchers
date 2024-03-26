@@ -29,7 +29,7 @@ export default () => {
     .find((row) => row.startsWith('expectedFileVersion='))
     ?.split('=')[1]
 
-  const $exceptedFileVersion = _.createHeading('h2', '------')
+  const $expectedFileVersion = _.createHeading('h2', '------')
 
   const $importFileHeader = _.createHeading('h3', 'Imported Data')
   const $ifTotalVouchers = _.createElement(
@@ -186,7 +186,7 @@ export default () => {
     '',
     '',
     ['file-manager'],
-    [$toSetUpPageBtn, $exceptedFileVersion, $importedFileDataBox, $howToUseBox]
+    [$toSetUpPageBtn, $expectedFileVersion, $importedFileDataBox, $howToUseBox]
   )
 
   const $main = _.createElement(
@@ -203,7 +203,7 @@ export default () => {
       downloadBoxAppended = true
     }
     if (expectedFileVersion !== undefined && expectedFileVersion !== version) {
-      $exceptedFileVersion.textContent = `Excepted Version : ${expectedFileVersion}`
+      $expectedFileVersion.textContent = `Expected Version : ${expectedFileVersion}`
     }
     _.on('change', $fileInput, handleFileChange)
     _.on('click', $confirmBtn, handleConfirm)

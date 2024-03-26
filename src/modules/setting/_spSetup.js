@@ -10,6 +10,7 @@ import {
   buildMonthlyChartData,
   buildForThisYearChartData,
   state,
+  vouchers,
 } from '../state.js'
 import { lockNav, unlockNav } from '../helpers/navLocker.js'
 import {
@@ -68,6 +69,9 @@ export default (__whenBackToFileManager) => {
   const [$addPaymentMethodForm, __setUpAddMethodForm, __cleanUpAddMethodForm] =
     _cAddPaymentMethodForm(__whenAddNewMethod)
   function __whenAddNewMethod(shortKey, method) {
+    const paymentMethod = { shortKey, method }
+    const paymentMethodRow = createPaymentMethodRow(shortKey, method)
+
     const existed = paymentMethodsClone.findIndex(
       (paymentMethod) =>
         paymentMethod.shortKey.toLowerCase() === shortKey.toLowerCase() ||
@@ -75,12 +79,13 @@ export default (__whenBackToFileManager) => {
     )
 
     if (existed !== -1) {
-      notifier.on('alreadyExisted', 'warning')
+      paymentMethodsClone.splice(existed, 1, { ...paymentMethod })
+      $paymentMethodRows.children[existed].replaceWith(paymentMethodRow)
       return
     }
 
-    paymentMethodsClone.push({ shortKey, method })
-    $paymentMethodRows.appendChild(createPaymentMethodRow(shortKey, method))
+    paymentMethodsClone.push(paymentMethod)
+    $paymentMethodRows.appendChild(paymentMethodRow)
   }
 
   const $setUpPaymentMethodsBox = _.createElement(
@@ -99,24 +104,43 @@ export default (__whenBackToFileManager) => {
   function handleClickOnGoodTypesRows(e) {
     if (e.target.tagName !== 'BUTTON') return
 
+    notifier.__start('Deleting . . .')
+
     const shortKey = e.target.dataset.key
+
+    const usedType = vouchers.findIndex((voucher) =>
+      voucher.goodInfo.some((info) => info.type === shortKey)
+    )
+
+    if (usedType !== -1) {
+      notifier.__end('Some Voucher Used this Type', 'warning')
+      return
+    }
 
     const index = goodTypesDataClone.findIndex(
       (goodType) => goodType.shortKey.toLowerCase() === shortKey.toLowerCase()
     )
     if (index === -1) {
-      notifier.on('sww', 'error')
+      notifier.__end('Something went wrong', 'error')
       return
     }
 
     goodTypesDataClone.splice(index, 1)
     e.target.parentElement.remove()
+    notifier.__end('Deleted', 'success')
   }
 
   const [$addGoodTypeForm, __setUpAddGoodTypeForm, __cleanUpAddGoodTypeForm] =
     _cAddGoodTypeForm(__whenAddNewType)
 
   function __whenAddNewType(shortKey, type, color) {
+    const rgbArr = hexToRgbArr(color)
+    const borderColor = `rgb(${rgbArr.join(',')})`
+    const bgColor = `rgba(${rgbArr.join(',')},0.6)`
+
+    const goodType = { shortKey, type, borderColor, bgColor }
+    const goodTypeRow = createGoodTypeRow(shortKey, type, borderColor, bgColor)
+
     const existed = goodTypesDataClone.findIndex(
       (goodType) =>
         goodType.shortKey.toLowerCase() === shortKey.toLowerCase() ||
@@ -124,19 +148,13 @@ export default (__whenBackToFileManager) => {
     )
 
     if (existed !== -1) {
-      notifier.on('alreadyExisted', 'warning')
+      goodTypesDataClone.splice(existed, 1, { ...goodType })
+      $goodTypeRows.children[existed].replaceWith(goodTypeRow)
       return
     }
 
-    const rgbArr = hexToRgbArr(color)
-
-    const borderColor = `rgb(${rgbArr.join(',')})`
-    const bgColor = `rgba(${rgbArr.join(',')},0.6)`
-
-    goodTypesDataClone.push({ shortKey, type, borderColor, bgColor })
-    $goodTypeRows.appendChild(
-      createGoodTypeRow(shortKey, type, borderColor, bgColor)
-    )
+    goodTypesDataClone.push({ ...goodType })
+    $goodTypeRows.appendChild(goodTypeRow)
   }
 
   const $setUpGoodTypesDataBox = _.createElement(

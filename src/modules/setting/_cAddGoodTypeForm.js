@@ -11,7 +11,7 @@ export default (__whenAddNewType) => {
   })
   const $goodTypeColorIp = _.createInput('color', ['color-input'])
 
-  const $addGoodTypeBtn = _.createButton('Add', ['btn', 'btn-blue'])
+  const $addGoodTypeBtn = _.createButton('Set', ['btn', 'btn-blue'])
   function handleAddGoodType() {
     const shortKey = $goodTypeShortKeyIp.value
     const type = $goodTypeIp.value

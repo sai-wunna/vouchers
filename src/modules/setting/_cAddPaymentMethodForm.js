@@ -10,7 +10,7 @@ export default (__whenAddNewMethod) => {
     placeholder: 'Method',
   })
 
-  const $addPaymentMethodBtn = _.createButton('Add', ['btn', 'btn-blue'])
+  const $addPaymentMethodBtn = _.createButton('Set', ['btn', 'btn-blue'])
   function handleAdd() {
     const shortKey = $paymentMethodShortKeyIp.value
     const method = $paymentMethodIp.value

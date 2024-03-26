@@ -117,11 +117,7 @@ export default () => {
     }
   }
 
-  const $toFirstPageBtn = _.createButton('To P-1', [
-    'd-none',
-    'btn',
-    'btn-ghost',
-  ])
+  const $toFirstPageBtn = _.createButton('To P-1', ['d-none', 'back-btn'])
   function handlePageChangeToFirstOne() {
     notifier.__start('Loading . . .')
 
