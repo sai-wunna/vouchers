@@ -66,37 +66,18 @@ export default function createEditVoucherForm(
   const $goodInfoBoxWrapper = _.createElement('', '', ['good-info-box-wrapper'])
 
   let boxNumber = 0
-  const boxEvtCleaners = []
+  const boxEvtCleaners = {}
   const addedGoodTypes = {}
 
   const $addGoodInfoBoxBtn = _.createButton('Add', ['btn', 'btn-blue', 'mx-1'])
   function handleAddBox() {
     const type = $typeSelect.value
     if (addedGoodTypes[type]) {
-      notifier.on('sameGoodTypeAdded', 'warning')
+      notifier.on('addedGoodType', 'warning')
       return
     }
     addedGoodTypes[type] = ++boxNumber
     $goodInfoBoxWrapper.appendChild(createGoodInfoBox(type))
-  }
-
-  const $removeGoodInfoBoxBtn = _.createButton('Remove', [
-    'btn',
-    'btn-red',
-    'mx-1',
-  ])
-  function handleRemoveBox() {
-    if (!$goodInfoBoxWrapper.lastChild) return
-
-    boxNumber--
-    $goodInfoBoxWrapper.lastChild.remove()
-    const {
-      type,
-      cleaners: [cleaner1, cleaner2],
-    } = boxEvtCleaners.pop()
-    cleaner1()
-    cleaner2()
-    addedGoodTypes[type] = false
   }
 
   const $typeSelect = _.createSelect(
@@ -116,7 +97,30 @@ export default function createEditVoucherForm(
     rate = 0,
     charge = 0
   ) {
-    const $boxNo = _.createSpan(`NO . ${boxNumber}`, ['good-box-no'])
+    const [$delBtn, btnEvtCleaner] = _.createButton(
+      'X',
+      ['btn-corner-right', 'btn-red'],
+      '',
+      (e) => {
+        try {
+          boxNumber--
+          const [cleaner1, cleaner2, cleaner3] = boxEvtCleaners[type]
+
+          delete boxEvtCleaners[type]
+          addedGoodTypes[type] = false
+
+          cleaner1()
+          cleaner2()
+          cleaner3()
+
+          e.target.parentElement.parentElement.remove()
+        } catch (error) {
+          console.log(error)
+          notifier.on('sww', 'error')
+        }
+      },
+      true
+    )
     // type
     const $lockedTypeSelect = _.createSelect(
       ['good-type-ip', 'form-select'],
@@ -156,7 +160,7 @@ export default function createEditVoucherForm(
       ['form-control', 'good-rate-ip', 'my-1'],
       '',
       { value: rate },
-      'input',
+      'change',
       handleChange,
       true
     )
@@ -167,15 +171,23 @@ export default function createEditVoucherForm(
       '',
       { value: charge, disabled: true }
     )
-    boxEvtCleaners.push({
-      type,
-      cleaners: [amountIpEvtCleaner, rateIpEvtCleaner],
-    })
+
+    boxEvtCleaners[type] = [amountIpEvtCleaner, rateIpEvtCleaner, btnEvtCleaner]
+
     return _.createElement(
       '',
       '',
       ['good-info-box'],
-      [$boxNo, $lockedTypeSelect, $amountIp, $rateIp, $chargeIp]
+      [
+        _.createElement(
+          '',
+          '',
+          ['form-group', 'p-relative'],
+          [$lockedTypeSelect, $delBtn]
+        ),
+        $amountIp,
+        _.createElement('', '', ['form-group'], [$rateIp, $chargeIp]),
+      ]
     )
   }
 
@@ -183,7 +195,7 @@ export default function createEditVoucherForm(
     '',
     '',
     ['controllers'],
-    [$addGoodInfoBoxBtn, $typeSelect, $removeGoodInfoBoxBtn]
+    [$typeSelect, $addGoodInfoBoxBtn]
   )
 
   const $paidLb = _.createLabel('Paid', 'edit_vc_paid', ['form-label'])
@@ -221,7 +233,7 @@ export default function createEditVoucherForm(
       const paymentMethod = $methodSelect.value
       const note = $noteTArea.value
       const updatedOn = getFormatDate()
-      const paid = Number($paidIp.value)
+      const paid = Number($paidIp.value) || 0
       const cancelled = $cancelCheckBox.checked
       const [totalAmount, totalCharge, goodInfo] = await convertToGoodInfoData(
         _.getAllNodes('.good-type-ip'),
@@ -297,14 +309,13 @@ export default function createEditVoucherForm(
     state.$editingVoucher = voucherInfo = null
     boxNumber = 0
 
-    while (boxEvtCleaners[0]) {
-      const {
-        type,
-        cleaners: [cleaner1, cleaner2],
-      } = boxEvtCleaners.pop()
+    for (const [k, v] of Object.entries(boxEvtCleaners)) {
+      const [cleaner1, cleaner2, cleaner3] = v
+      addedGoodTypes[k] = false
+      delete boxEvtCleaners[k]
       cleaner1()
       cleaner2()
-      addedGoodTypes[type] = false
+      cleaner3()
     }
     _.emptyChild($methodSelect)
     _.emptyChild($goodInfoBoxWrapper)
@@ -352,7 +363,6 @@ export default function createEditVoucherForm(
 
     _.on('click', $deleteBtn, handleDelete)
     _.on('click', $addGoodInfoBoxBtn, handleAddBox)
-    _.on('click', $removeGoodInfoBoxBtn, handleRemoveBox)
     _.on('click', $updateBtn, handleUpdate)
   }
 
@@ -360,7 +370,6 @@ export default function createEditVoucherForm(
     __cleanUpModal()
     _.removeOn('click', $deleteBtn, handleDelete)
     _.removeOn('click', $addGoodInfoBoxBtn, handleAddBox)
-    _.removeOn('click', $removeGoodInfoBoxBtn, handleRemoveBox)
     _.removeOn('click', $updateBtn, handleUpdate)
   }
 

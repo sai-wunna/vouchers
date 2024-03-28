@@ -233,7 +233,7 @@ export default () => {
   const $pageNavigators = _.createElement(
     '',
     '',
-    ['controllers'],
+    ['page-navigators'],
     [$currentPageInfo, $pageControllers]
   )
 

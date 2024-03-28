@@ -24,7 +24,7 @@ class Notify {
     versionConflict: 'File version are not same !!!',
     outOfDataForChart: 'No enough data to build chart',
     chartForPcOnly: 'Only Work In large Screen',
-    sameGoodTypeAdded: 'Same Good Type Added !!',
+    addedGoodType: 'Good Type has Added !!',
     alreadyExisted: 'Already Existed',
   }
 

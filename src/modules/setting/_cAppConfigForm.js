@@ -72,6 +72,7 @@ export default () => {
 
     state.appConfig.receiptBgColor = color
     await appendCustomStyles(goodTypesData, color)
+    $receiptBgColorBox.style.backgroundColor = color
   }
 
   function ih_createColorSelector(color, selected) {
@@ -90,7 +91,7 @@ export default () => {
   const $receiptBgColorBox = _.createElement(
     '',
     '',
-    ['form-group'],
+    ['receipt-bg-color-form'],
     [_.createSpan('Receipt Color'), $receiptBgThemeBox]
   )
 
@@ -116,6 +117,9 @@ export default () => {
       $receiptBgThemeBox.appendChild(
         ih_createColorSelector(color, color === currentColor)
       )
+      if (color === currentColor) {
+        $receiptBgColorBox.style.backgroundColor = color
+      }
     }
   }
 

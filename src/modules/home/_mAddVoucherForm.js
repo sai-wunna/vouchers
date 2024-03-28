@@ -123,7 +123,7 @@ export default (__whenCreateNewVoucher) => {
 
   // goods info box
   let boxNumber = 0
-  const boxEvtCleaners = []
+  const boxEvtCleaners = {}
   const addedGoodTypes = {}
 
   const $typeSelect = _.createSelect(
@@ -142,40 +142,40 @@ export default (__whenCreateNewVoucher) => {
   function handleAddBox() {
     const type = $typeSelect.value
     if (addedGoodTypes[type]) {
-      notifier.on('sameGoodTypeAdded', 'warning')
+      notifier.on('addedGoodType', 'warning')
       return
     }
     addedGoodTypes[type] = ++boxNumber
     $goodInfoBoxWrapper.appendChild(createGoodInfoBox(type))
   }
 
-  const $removeGoodInfoBoxBtn = _.createButton('Remove', [
-    'btn',
-    'btn-red',
-    'mx-1',
-  ])
-
-  function handleRemoveBox() {
-    if (!$goodInfoBoxWrapper.lastChild) return
-
-    boxNumber--
-    $goodInfoBoxWrapper.lastChild.remove()
-    const {
-      type,
-      cleaners: [cleaner1, cleaner2],
-    } = boxEvtCleaners.pop()
-
-    addedGoodTypes[type] = false
-
-    cleaner1()
-    cleaner2()
-  }
-
   const $goodInfoBoxWrapper = _.createElement('', '', ['good-info-box-wrapper'])
 
   function createGoodInfoBox(goodType) {
-    const $boxNo = _.createSpan(`NO . ${boxNumber}`, ['good-box-no'])
-    // type
+    const [$delBtn, btnEvtCleaner] = _.createButton(
+      'X',
+      ['btn-corner-right', 'btn-red'],
+      '',
+      (e) => {
+        try {
+          boxNumber--
+          const [cleaner1, cleaner2, cleaner3] = boxEvtCleaners[goodType]
+
+          delete boxEvtCleaners[goodType]
+          addedGoodTypes[goodType] = false
+
+          cleaner1()
+          cleaner2()
+          cleaner3()
+
+          e.target.parentElement.parentElement.remove()
+        } catch (error) {
+          console.log(error)
+          notifier.on('sww', 'error')
+        }
+      },
+      true
+    )
 
     function handleChange() {
       const amount = Number($amountIp.value.split(/[ -]/)[0]) || 0
@@ -183,6 +183,7 @@ export default (__whenCreateNewVoucher) => {
       $chargeIp.value = amount * rate
     }
 
+    // type
     const $lockedTypeSelect = _.createSelect(
       ['good-type-ip', 'form-select'],
       '',
@@ -212,7 +213,7 @@ export default (__whenCreateNewVoucher) => {
       ['form-control', 'good-rate-ip', 'my-1'],
       '',
       '',
-      'input',
+      'change',
       handleChange,
       true
     )
@@ -223,15 +224,26 @@ export default (__whenCreateNewVoucher) => {
       '',
       { disabled: true }
     )
-    boxEvtCleaners.push({
-      type: goodType,
-      cleaners: [amountIpEvtCleaner, rateIpEvtCleaner],
-    })
+    boxEvtCleaners[goodType] = [
+      amountIpEvtCleaner,
+      rateIpEvtCleaner,
+      btnEvtCleaner,
+    ]
+
     return _.createElement(
       '',
       '',
       ['good-info-box'],
-      [$boxNo, $lockedTypeSelect, $amountIp, $rateIp, $chargeIp]
+      [
+        _.createElement(
+          '',
+          '',
+          ['form-group', 'p-relative'],
+          [$lockedTypeSelect, $delBtn]
+        ),
+        $amountIp,
+        _.createElement('', '', ['form-group'], [$rateIp, $chargeIp]),
+      ]
     )
   }
 
@@ -239,7 +251,7 @@ export default (__whenCreateNewVoucher) => {
     '',
     '',
     ['controllers'],
-    [$addGoodInfoBoxBtn, $typeSelect, $removeGoodInfoBoxBtn]
+    [$typeSelect, $addGoodInfoBoxBtn]
   )
 
   // note
@@ -260,7 +272,7 @@ export default (__whenCreateNewVoucher) => {
     e.preventDefault()
     lockBtn(e.target, 3000)
 
-    if (!$nameIp.value || !$paidIp.value || !boxNumber) {
+    if (!$nameIp.value || !$paidIp.value || boxNumber === 0) {
       notifier.on('invalidVoucherInfo', 'warning')
       return
     }
@@ -278,7 +290,7 @@ export default (__whenCreateNewVoucher) => {
 
         notifier.__processing('New User Created', 'success')
       }
-      const paid = Number($paidIp.value)
+      const paid = Number($paidIp.value) || 0
       const date = $dateIp.value
       const note = $noteTArea.value
       const paymentMethod = $methodSelect.value
@@ -346,20 +358,16 @@ export default (__whenCreateNewVoucher) => {
     searchCustomerResult.splice(0)
     _.emptyChild($goodInfoBoxWrapper)
     _.emptyChild($nameList)
-    while (boxEvtCleaners[0]) {
-      const {
-        type,
-        cleaners: [cleaner1, cleaner2],
-      } = boxEvtCleaners.pop()
-
-      addedGoodTypes[type] = false
-
+    for (const [k, v] of Object.entries(boxEvtCleaners)) {
+      const [cleaner1, cleaner2, cleaner3] = v
+      addedGoodTypes[k] = false
+      delete boxEvtCleaners[k]
       cleaner1()
       cleaner2()
+      cleaner3()
     }
     _.removeOn('click', $nameList, setUserFromList)
     _.removeOn('click', $addGoodInfoBoxBtn, handleAddBox)
-    _.removeOn('click', $removeGoodInfoBoxBtn, handleRemoveBox)
     _.removeOn('input', $nameIp, handleNameSearch)
     _.removeOn('click', $submitButton, handleSubmit)
   }
@@ -367,7 +375,6 @@ export default (__whenCreateNewVoucher) => {
   function __setUpFunc() {
     _.on('click', $nameList, setUserFromList)
     _.on('click', $addGoodInfoBoxBtn, handleAddBox)
-    _.on('click', $removeGoodInfoBoxBtn, handleRemoveBox)
     _.on('input', $nameIp, handleNameSearch)
     _.on('click', $submitButton, handleSubmit)
     $nameIp.focus()

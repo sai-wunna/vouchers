@@ -5,7 +5,7 @@ import _ from '../dom/index.js'
 export default () => {
   const $link = _.createAnchor(
     'link',
-    'Reach Me Via Github',
+    'App Crashed, Help Me Via Github',
     'https://github.com/sai-wunna'
   )
 

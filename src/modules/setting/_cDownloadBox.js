@@ -49,8 +49,7 @@ export default () => {
         paymentMethods,
         goodTypesData,
         chartConfig: state.chartConfig,
-        starToChargeRatio: state.starToChargeRatio,
-        // user : state.user,
+        appConfig: state.appConfig,
         version: `${getFormatDate()
           .split('-')
           .join('')}-${getDayName()}-${new Date().getTime()}`,
